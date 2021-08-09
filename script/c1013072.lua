@@ -6,7 +6,7 @@ function cod.initial_effect(c)
 	--Pendulum Summon
 	Pendulum.AddProcedure(c,false)
 	--Synchro Summon
-	Synchro.AddProcedure(c,cod.matfilter1,1,1,Synchro.NonTunerEx(Card.IsRace,RACE_ZOMBIE),1,99)
+	Synchro.AddProcedure(c,aux.FilterBoolFunctionEx(Card.IsRace,RACE_ZOMBIE),1,1,Synchro.NonTunerEx(Card.IsRace,RACE_ZOMBIE),1,99, cod.matfilter1)
 	--No Tuner Check
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_SINGLE)
@@ -55,9 +55,8 @@ function cod.initial_effect(c)
 end
 
 --Synchro Summon
-function cod.matfilter1(c,syncard)
-	return (c:IsType(TYPE_TUNER) and c:IsRace(RACE_ZOMBIE))
-		or (c:IsType(TYPE_PENDULUM) and c:IsType(TYPE_NORMAL) and c:IsSummonType(SUMMON_TYPE_PENDULUM) and c:IsNotTuner(syncard))
+function cod.matfilter1(c,scard,sumtype,tp)
+	return c:IsType(TYPE_PENDULUM,scard,sumtype,tp) and c:IsType(TYPE_NORMAL,scard,sumtype,tp) and c:IsSummonType(SUMMON_TYPE_PENDULUM)
 end
 
 --Gain LP
@@ -112,7 +111,7 @@ end
 function cod.thop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
 	if not c:IsRelateToEffect(e) then return end
-	local g=Duel.GetMatchingGroup(aux.NecroValleyFilter(Card.IsAbleToHand),tp,LOCATION_GRAVE,0,nil)
+	local g=Duel.GetMatchingGroup(Card.IsAbleToHand,tp,LOCATION_GRAVE,0,nil)
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
 	local g1=g:Select(tp,1,1,nil)
 	g:Remove(Card.IsType,nil,g1:GetFirst():GetType())

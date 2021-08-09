@@ -16,7 +16,7 @@ function c1013055.initial_effect(c)
 	e3:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e3:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
 	e3:SetRange(LOCATION_PZONE)
-	e3:SetCode(EVENT_PHASE_START+PHASE_BATTLE)
+	e3:SetCode(EVENT_PHASE+PHASE_BATTLE_START)
 	e3:SetTarget(c1013055.sptg)
 	e3:SetOperation(c1013055.spop)
 	c:RegisterEffect(e3)
@@ -49,6 +49,13 @@ function c1013055.spop(e,tp,eg,ep,ev,re,r,rp)
 		e2:SetOperation(c1013055.atkop)
 		e2:SetReset(RESET_EVENT+0x1fe0000)
 		c:RegisterEffect(e2)
+		local e3=Effect.CreateEffect(c)
+		e3:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_F)
+		e3:SetRange(LOCATION_MZONE)
+		e3:SetCode(EVENT_PHASE+PHASE_BATTLE)
+		e3:SetTarget(c1013055.pentg)
+		e3:SetOperation(c1013055.penop)
+		c:RegisterEffect(e3)
 	end
 end
 function c1013055.atkcon(e,tp,eg,ep,ev,re,r,rp)
@@ -62,4 +69,14 @@ function c1013055.atkop(e,tp,eg,ep,ev,re,r,rp)
 	e1:SetValue(c:GetBaseAttack()*2)
 	e1:SetReset(RESET_PHASE+PHASE_DAMAGE_CAL)
 	c:RegisterEffect(e1)
+end
+function c1013055.pentg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return Duel.CheckLocation(tp,LOCATION_PZONE,0) or Duel.CheckLocation(tp,LOCATION_PZONE,1) end
+end
+function c1013055.penop(e,tp,eg,ep,ev,re,r,rp)
+	if not Duel.CheckLocation(tp,LOCATION_PZONE,0) and not Duel.CheckLocation(tp,LOCATION_PZONE,1) then return false end
+	local c=e:GetHandler()
+	if c:IsRelateToEffect(e) then
+		Duel.MoveToField(c,tp,tp,LOCATION_PZONE,POS_FACEUP,true)
+	end
 end
