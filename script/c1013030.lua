@@ -1,7 +1,7 @@
 --Pendulum Zombie Dragon
 function c1013030.initial_effect(c)
 	 --Pendulum Set
-	aux.EnablePendulumAttribute(c,false)
+	Pendulum.AddProcedure(c,false)
 	--Activate
 	local e1=Effect.CreateEffect(c)
 	e1:SetDescription(1160)

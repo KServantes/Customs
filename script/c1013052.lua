@@ -1,7 +1,7 @@
 --Temple of Skulls
 function c1013052.initial_effect(c)
 	--Pendulum Set
-	aux.EnablePendulumAttribute(c)
+	Pendulum.AddProcedure(c)
 	--Destroy
 	local e1=Effect.CreateEffect(c)
 	e1:SetDescription(aux.Stringid(1013052,0))

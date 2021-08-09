@@ -1,7 +1,7 @@
 --Władysław, Master of Shadows
 --Vladislao, Maestro de los Sombras
 function c101307.initial_effect(c)
-	aux.AddXyzProcedure(c,aux.FilterBoolFunction(Card.IsRace,RACE_ZOMBIE),6,2)
+	Xyz.AddProcedure(c,aux.FilterBoolFunctionEx(Card.IsRace,RACE_ZOMBIE),6,2)
 	c:EnableReviveLimit()
 	--Negar
 	local e1=Effect.CreateEffect(c)

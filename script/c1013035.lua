@@ -1,7 +1,7 @@
 --Dukoroizo the Grim Reaper
 function c1013035.initial_effect(c)
 	--Pendulum Set
-	aux.EnablePendulumAttribute(c)
+	Pendulum.AddProcedure(c)
 	--Special Summon
 	local e2=Effect.CreateEffect(c)
 	e2:SetDescription(aux.Stringid(1013035,0))

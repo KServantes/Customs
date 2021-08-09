@@ -1,14 +1,14 @@
 --Ciber Skull Servant
 --Keddy was here~
-local function ID()
-    local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
-    str=string.sub(str,1,string.len(str)-4)
-    local cod=_G[str]
-    local id=tonumber(string.sub(str,2))
-    return id,cod
-end
+-- local function ID()
+--     local str=string.match(debug.getinfo(2,'S')['source'],"c%d+%.lua")
+--     str=string.sub(str,1,string.len(str)-4)
+--     local cod=_G[str]
+--     local id=tonumber(string.sub(str,2))
+--     return id,cod
+-- end
 
-local id,cod=ID()
+local cod,id=GetID()
 function cod.initial_effect(c)
 	--Invocación Enlace
 	c:EnableReviveLimit()
@@ -18,9 +18,9 @@ function cod.initial_effect(c)
 	e1:SetCode(EFFECT_SPSUMMON_PROC)
 	e1:SetProperty(EFFECT_FLAG_UNCOPYABLE+EFFECT_FLAG_IGNORE_IMMUNE)
 	e1:SetRange(LOCATION_EXTRA)
-	e1:SetCondition(aux.LinkCondition(cod.lfitler,2,2))
-	e1:SetTarget(aux.LinkTarget(cod.lfitler,2,2))
-	e1:SetOperation(aux.LinkOperation(cod.lfitler,2,2))
+	e1:SetCondition(Link.Condition(cod.lfitler,2,2))
+	e1:SetTarget(Link.Target(cod.lfitler,2,2))
+	e1:SetOperation(Link.Operation(cod.lfitler,2,2))
 	e1:SetValue(SUMMON_TYPE_LINK)
 	c:RegisterEffect(e1)
 	--Invocación Enlace 2

@@ -1,7 +1,7 @@
 --Three-Legged Pendulum Zombie
 function c1013062.initial_effect(c)
 	--Pendulum
-	aux.EnablePendulumAttribute(c)
+	Pendulum.AddProcedure(c)
 	--[[	aux.AddPendulumProcedure(c)
 	--Activate
 	local e1=Effect.CreateEffect(c)

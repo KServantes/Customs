@@ -1,7 +1,7 @@
 --Master Pendulum Kyonshee
 function c1013053.initial_effect(c)
 	--Pendulum Set
-	aux.EnablePendulumAttribute(c)
+	Pendulum.AddProcedure(c)
 	--Second Attack
 	local e2=Effect.CreateEffect(c)
 	e2:SetDescription(aux.Stringid(1013053,0))
