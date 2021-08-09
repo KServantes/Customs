@@ -1,7 +1,7 @@
 --Clown Pendulum Zombie (1013038)
 function c1013038.initial_effect(c)
 	--Pendulum Set
-	aux.EnablePendulumAttribute(c)
+	Pendulum.AddProcedure(c)
 	--[[	aux.AddPendulumProcedure(c)
 	--Activate
 	local e1=Effect.CreateEffect(c)

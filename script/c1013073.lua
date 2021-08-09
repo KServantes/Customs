@@ -4,7 +4,7 @@ local id,cod=1013073,c1013073
 function cod.initial_effect(c)
 	--Synchro Summon
 	c:EnableReviveLimit()
-	aux.AddSynchroProcedure2(c,cod.matfilter1,aux.NonTuner(cod.matfilter2))
+	Synchro.AddProcedure(c,cod.matfilter1,1,1,Synchro.NonTunerEx(cod.matfilter2),1,1)
 	--Triple Attack
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_SINGLE)

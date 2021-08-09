@@ -1,7 +1,7 @@
 --Armored Pendulum Zombie
 function c1013031.initial_effect(c)
 	--Pendulum Set
-	aux.EnablePendulumAttribute(c)
+	Pendulum.AddProcedure(c)
 	--Change B-Damage
 	local e2=Effect.CreateEffect(c)
 	e2:SetDescription(aux.Stringid(1013031,0))

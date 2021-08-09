@@ -1,12 +1,12 @@
 --Shadow Mage of the Graveyard
 --Keddy was here~
-local id,cod=1013072,c1013072
+local cod,id=GetID()
 function cod.initial_effect(c)
 	c:EnableReviveLimit()
 	--Pendulum Summon
-	aux.EnablePendulumAttribute(c,false)
+	Pendulum.AddProcedure(c,false)
 	--Synchro Summon
-	aux.AddSynchroMixProcedure(c,cod.matfilter1,nil,nil,aux.NonTuner(Card.IsRace,RACE_ZOMBIE),1,99)
+	Synchro.AddProcedure(c,cod.matfilter1,1,1,Synchro.NonTunerEx(Card.IsRace,RACE_ZOMBIE),1,99)
 	--No Tuner Check
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_SINGLE)

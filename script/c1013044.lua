@@ -2,7 +2,7 @@
 --Mek Zöe Pedülom Zombi
 function c1013044.initial_effect(c)
 	--Péndülóm Sçótto
-	aux.EnablePendulumAttribute(c)
+	Pendulum.AddProcedure(c)
 	--[[	aux.AddPendulumProcedure(c)
 	--Ácttanèn
 	local e1=Effect.CreateEffect(c)

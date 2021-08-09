@@ -1,7 +1,7 @@
 --Pendughoul with an Appitite
 function c1013065.initial_effect(c)
 	--Pendulum
-	aux.EnablePendulumAttribute(c)
+	Pendulum.AddProcedure(c)
 	--[[	aux.AddPendulumProcedure(c)
 	--Activate
 	local e1=Effect.CreateEffect(c)

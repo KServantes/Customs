@@ -3,7 +3,7 @@
 local id,cod=1013071,c1013071
 function cod.initial_effect(c)
 	--Pendulum Zone
-	aux.EnablePendulumAttribute(c)
+	Pendulum.AddProcedure(c)
 	---==Pendulum Effect==---
 	--Negate
 	local e1=Effect.CreateEffect(c)

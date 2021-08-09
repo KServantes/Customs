@@ -1,7 +1,7 @@
 --Magical Pendulum Ghost
 function c1013039.initial_effect(c)
 	--Pendulum Set
-	aux.EnablePendulumAttribute(c)
+	Pendulum.AddProcedure(c)
 	--[[	aux.AddPendulumProcedure(c)
 	--Activate
 	local e1=Effect.CreateEffect(c)

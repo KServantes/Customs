@@ -1,7 +1,7 @@
 --Phantom Pendulum Ghost
 function c1013042.initial_effect(c)
 	--Pendulum Set
-	aux.EnablePendulumAttribute(c)
+	Pendulum.AddProcedure(c)
 	--Destroy
 	local e2=Effect.CreateEffect(c)
 	e2:SetDescription(aux.Stringid(1013042,0))
