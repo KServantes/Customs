@@ -105,7 +105,7 @@ end
 function cod.thtg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chkc then return chkc:IsLocation(LOCATION_GRAVE) and chkc:IsControler(tp) and cod.nvfilter(chkc) end
 	local g=Duel.GetMatchingGroup(Card.IsAbleToHand,tp,LOCATION_GRAVE,0,nil)
-	if chk==0 then return g:GetClassCount(Card.IsType,TYPE_MONSTER+TYPE_SPELL+TYPE_TRAP)>=1 end
+	if chk==0 then return g:GetClassCount(Card.GetType)>=1 end
 	Duel.SetOperationInfo(0,CATEGORY_TOHAND,nil,1,tp,LOCATION_GRAVE)
 end
 function cod.thop(e,tp,eg,ep,ev,re,r,rp)

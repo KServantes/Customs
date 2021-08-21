@@ -65,6 +65,6 @@ function c1013037.opop(e,tp,eg,ep,ev,re,r,rp)
 	local tc=Duel.GetFirstTarget()
 	if not Duel.IsExistingMatchingCard(Card.IsRace,tp,LOCATION_GRAVE,0,1,nil,RACE_ZOMBIE) then return end
 	if tc and tc:IsRelateToEffect(e) then
-		Duel.SendtoGrave(tc,nil,REASON_EFFECT)
+		Duel.SendtoGrave(tc,REASON_EFFECT)
 	end
 end
