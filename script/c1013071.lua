@@ -32,8 +32,7 @@ function cod.initial_effect(c)
 	c:RegisterEffect(e2)
 end
 function cod.ngcon(e,tp,eg,ep,ev,re,r,rp,chk)
-	local ph=Duel.GetCurrentPhase()
-	return not e:GetHandler():IsStatus(STATUS_DESTROY_CONFIRMED) and ep~=tp
+	return not e:GetHandler():IsStatus(STATUS_DESTROY_CONFIRMED) and rp~=tp
 		and re:IsActiveType(TYPE_MONSTER) and Duel.IsChainNegatable(ev)
 end
 function cod.ngtg(e,tp,eg,ep,ev,re,r,rp,chk)
@@ -132,7 +131,7 @@ function cod.repop(e,tp,eg,ep,ev,re,r,rp)
 	local g=Duel.SelectMatchingCard(tp,cod.rfilter,tp,LOCATION_PZONE,0,1,1,nil)
 	if g:GetCount()>0 and Duel.SendtoExtraP(g,nil,REASON_EFFECT) then
 		Duel.BreakEffect()
-		if not Duel.MoveToField(e:GetHandler(),tp,tp,LOCATION_SZONE,POS_FACEUP,true) then end
+		if not Duel.MoveToField(e:GetHandler(),tp,tp,LOCATION_PZONE,POS_FACEUP,true) then end
 		local e1=Effect.CreateEffect(c)
 		e1:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_CONTINUOUS)
 		e1:SetCode(EVENT_TO_DECK)
