@@ -35,7 +35,6 @@ end
 
 --Recover
 function cod.sumfilter(c)
-	-- Debug.Message()
 	if not c:IsType(TYPE_FUSION) then return false end
 	return c:IsType(TYPE_PENDULUM) and c:GetSummonType()==SUMMON_TYPE_FUSION
 		and c:GetMaterialCount() == c:GetMaterial():FilterCount(aux.AND(Card.IsFaceup, aux.FilterBoolFunction(Card.IsLocation,LOCATION_EXTRA)),nil)
@@ -44,21 +43,17 @@ function cod.rccon(e,tp,eg,ep,ev,re,r,rp)
 	return eg:IsExists(cod.sumfilter,1,nil) 
 end
 function cod.rctg(e,tp,eg,ep,ev,re,r,rp,chk)
-	Debug.Message(Duel.IsExistingMatchingCard(cod.sumfilter,tp,LOCATION_EXTRA,0,1,nil))
 	if chk==0 then return e:GetHandler():IsDestructable() 
 		and Duel.IsExistingMatchingCard(cod.sumfilter,tp,LOCATION_MZONE,0,1,nil) end
 	Duel.Destroy(e:GetHandler(), REASON_EFFECT)
 	local g=Group.CreateGroup()
 	if #eg==1 then
-		Debug.Message(#eg)
-		Debug.Message(eg:GetFirst():GetMaterialCount())
 		g=eg:GetFirst():GetMaterial()
 	else
 		Duel.Hint(HINT_SELECTMSG,tp, HINTMSG_ATOHAND)
 		local sc=eg:FilterSelect(cod.sumfilter,1,1,nil)
 		g=sc:GetMaterial()
 	end
-	if g==0 then return end
 	e:SetLabelObject(g)
 	g:KeepAlive()
 	Duel.SetOperationInfo(0,CATEGORY_TOHAND,g,#g,tp,LOCATION_EXTRA)
