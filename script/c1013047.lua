@@ -1,8 +1,4 @@
 --Pendulum Bone Mouse
---[[If you Fusion Summon a Pendulum Monster and the materials used for its Summon are in the Extra Deck: 
-You can destroy this card; add the face-up materials from the Extra Deck to your hand. 
-You can only activate this effect of "Pendulum Bone Mouse" once per turn. 
-Once, while this card is on the field: You can shuffle up to 5 face-up cards in your Extra Deck (min. 3) into the Deck, and if you do, draw 1 card for every 2 cards sent.]]--
 local cod,id=GetID()
 function c1013047.initial_effect(c)
 	--Pendulum Set
