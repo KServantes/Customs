@@ -39,16 +39,33 @@ function cod.checkop(e,tp,eg,ep,ev,re,r,rp)
 	end
 end
 
-function cod.spfilter(c,e,tp)
-	return c:IsType(TYPE_FUSION) and Duel.GetLocationCountFromEx(tp,tp,nil,c)>0 and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
+function cod.spfilter(c,e,tp,min,max)
+	if min == max then return false end
+	local lv = c:GetLevel()
+	return lv>=min and lv<=max and c:IsType(TYPE_FUSION) and Duel.GetLocationCountFromEx(tp,tp,nil,c)>0 and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
+end
+function cod.helper(c)
+	local min, max
+	local lscale, rscale = c:GetLeftScale(), c:GetRightScale()
+	if lscale == rscale then return 0, 0 end
+	if lscale > rscale then
+		max = lscale -1
+		min = rscale +1
+	else
+		min = lscale +1
+		max = rscale -1
+	end
+	return min, max
 end
 function cod.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.IsExistingMatchingCard(cod.spfilter,tp,LOCATION_EXTRA,0,1,nil,e,tp) end
+	local min, max = cod.helper(e:GetHandler())
+	if chk==0 then return Duel.IsExistingMatchingCard(cod.spfilter,tp,LOCATION_EXTRA,0,1,nil,e,tp,min,max) end
 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_EXTRA)
 end
 function cod.spop(e,tp,eg,ep,ev,re,r,rp)
+	local min, max = cod.helper(e:GetHandler())
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-	local g=Duel.SelectMatchingCard(tp, cod.spfilter, tp, LOCATION_EXTRA, 0, 1, 1, nil, e, tp)
+	local g=Duel.SelectMatchingCard(tp, cod.spfilter, tp, LOCATION_EXTRA, 0, 1, 1, nil, e, tp, min, max)
 	if #g<=0 or Duel.GetLocationCountFromEx(tp)==0 then return end
 	local tc=g:GetFirst()
 	if Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP) then
