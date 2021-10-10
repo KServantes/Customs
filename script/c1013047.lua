@@ -32,7 +32,7 @@ end
 --Recover
 function cod.sumfilter(c)
 	if not c:IsType(TYPE_FUSION) then return false end
-	return c:IsType(TYPE_PENDULUM) and c:GetSummonType()==SUMMON_TYPE_FUSION
+	return c:IsType(TYPE_PENDULUM) and c:GetSummonType()==SUMMON_TYPE_FUSION and c:GetMaterialCount()~=0
 		and c:GetMaterialCount() == c:GetMaterial():FilterCount(aux.AND(Card.IsFaceup, aux.FilterBoolFunction(Card.IsLocation,LOCATION_EXTRA)),nil)
 end
 function cod.rccon(e,tp,eg,ep,ev,re,r,rp)
