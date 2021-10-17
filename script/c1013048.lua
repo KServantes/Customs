@@ -1,95 +1,70 @@
 --Flame Pendulum Ghost
 local cod, id = GetID()
+Duel.LoadScript('kd.lua')
 function c1013048.initial_effect(c)
 	--Pendulum Set
 	Pendulum.AddProcedure(c)
 	--Fusion Summon
 	c:EnableReviveLimit()
 	Fusion.AddProcMix(c,true,true,aux.FilterBoolFunctionEx(Card.IsRace,RACE_ZOMBIE),aux.FilterBoolFunctionEx(Card.IsAttribute, ATTRIBUTE_FIRE))
-	--Pendulum Set
+	--Place
+	Qued.AddRPepeEffect(c,id)
+	--Damage
 	local e1=Effect.CreateEffect(c)
-	e1:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
-	e1:SetCode(EVENT_CUSTOM+id)
+	e1:SetCategory(CATEGORY_DAMAGE)
+	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+	e1:SetType(EFFECT_TYPE_CONTINUOUS+EFFECT_TYPE_FIELD)
+	e1:SetCode(EVENT_DESTROY)
 	e1:SetRange(LOCATION_PZONE)
-	e1:SetTarget(cod.sptg)
-	e1:SetOperation(cod.spop)
+	e1:SetCondition(cod.damcon)
+	e1:SetTarget(cod.damtg)
+	e1:SetOperation(cod.damop)
 	c:RegisterEffect(e1)
-	aux.GlobalCheck(cod,function()
-		local ge2=Effect.CreateEffect(c)
-		ge2:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
-		ge2:SetCode(EVENT_ADJUST)
-		ge2:SetOperation(cod.checkop)
-		Duel.RegisterEffect(ge2,0)
-	end)
+	--Destroy
+	local e2=Effect.CreateEffect(c)
+	e2:SetType(EFFECT_TYPE_CONTINUOUS+EFFECT_TYPE_SINGLE)
+	e2:SetCode(EFFECT_DESTROY_REPLACE)
+	e2:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
+	e2:SetRange(LOCATION_PZONE)
+	e2:SetTarget(cod.desreptg)
+	e2:SetOperation(cod.desrepop)
+	c:RegisterEffect(e2)
 end
 
 function cod.cfilter(c)
-	local seq=c:GetSequence()
-	return c:GetFlagEffect(id+seq)==0 and (not c:IsPreviousLocation(LOCATION_PZONE) or c:GetPreviousSequence()~=seq)
+	return c:IsLocation(LOCATION_ONFIELD)
 end
-function cod.checkop(e,tp,eg,ep,ev,re,r,rp)
-	local tot=Duel.IsDuelType(DUEL_SEPARATE_PZONE) and 13 or 4
-	local g=Duel.GetMatchingGroup(cod.cfilter,tp,LOCATION_PZONE,0,nil)
-	if #g>0 then
-		for tc in aux.Next(g) do
-			tc:ResetFlagEffect(id+tot-tc:GetSequence())
-			Duel.RaiseSingleEvent(tc,EVENT_CUSTOM+id,e,0,tp,tp,0)
-			tc:RegisterFlagEffect(id+tc:GetSequence(),RESET_EVENT+RESETS_STANDARD,0,1)
-		end
-	end
+function cod.damcon(e,tp,eg,ep,ev,re,r,rp)
+	return eg:IsExists(cod.cfilter,1,nil)
+end
+function cod.damtg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return true end
+	Duel.SetTargetPlayer(1-tp)
+	Duel.SetTargetParam(500)
+	Duel.SetOperationInfo(0,CATEGORY_DAMAGE,nil,0,1-tp,500)
+end
+function cod.damop(e,tp,eg,ep,ev,re,r,rp)
+	local p,d=Duel.GetChainInfo(0,CHAININFO_TARGET_PLAYER,CHAININFO_TARGET_PARAM)
+	Duel.Damage(p,d,REASON_EFFECT)
 end
 
-function cod.spfilter(c,e,tp,min,max)
-	if min == max then return false end
-	local lv = c:GetLevel()
-	return lv>=min and lv<=max and c:IsType(TYPE_FUSION) and Duel.GetLocationCountFromEx(tp,tp,nil,c)>0 and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
+function cod.repfilter(c)
+	return not c:IsStatus(STATUS_DESTROY_CONFIRMED)
 end
-function cod.helper(c)
-	local min, max
-	local lscale, rscale = c:GetLeftScale(), c:GetRightScale()
-	if lscale == rscale then return 0, 0 end
-	if lscale > rscale then
-		max = lscale -1
-		min = rscale +1
-	else
-		min = lscale +1
-		max = rscale -1
-	end
-	return min, max
+function cod.desreptg(e,tp,eg,ep,ev,re,r,rp,chk)
+	local c=e:GetHandler()
+	if chk==0 then return not c:IsReason(REASON_REPLACE) and Duel.IsExistingMatchingCard(cod.repfilter,tp,0,LOCATION_ONFIELD,1,nil) end
+	if Duel.SelectEffectYesNo(tp,c,96) then
+		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_DESREPLACE)
+		local tc=Duel.SelectMatchingCard(tp,cod.repfilter,tp,0,LOCATION_ONFIELD,1,1,nil):GetFirst()
+		e:SetLabelObject(tc)
+		return true
+	else return false end
 end
-function cod.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
-	local min, max = cod.helper(e:GetHandler())
-	if chk==0 then return Duel.IsExistingMatchingCard(cod.spfilter,tp,LOCATION_EXTRA,0,1,nil,e,tp,min,max) end
-	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_EXTRA)
-end
-function cod.spop(e,tp,eg,ep,ev,re,r,rp)
-	local min, max = cod.helper(e:GetHandler())
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-	local g=Duel.SelectMatchingCard(tp, cod.spfilter, tp, LOCATION_EXTRA, 0, 1, 1, nil, e, tp, min, max)
-	if #g<=0 or Duel.GetLocationCountFromEx(tp)==0 then return end
-	local tc=g:GetFirst()
-	if Duel.SpecialSummon(tc,0,tp,tp,false,false,POS_FACEUP) then
-		local fid=e:GetHandler():GetFieldID()
-		tc:RegisterFlagEffect(id,RESET_EVENT+RESETS_STANDARD,0,1,fid)
-		local e1=Effect.CreateEffect(e:GetHandler())
-		e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
-		e1:SetCode(EVENT_PHASE+PHASE_END)
-		e1:SetCountLimit(1)
-		e1:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE)
-		e1:SetLabel(fid)
-		e1:SetLabelObject(tc)
-		e1:SetCondition(cod.descon)
-		e1:SetOperation(cod.desop)
-		Duel.RegisterEffect(e1,tp)
-	end
-end
-function cod.descon(e,tp,eg,ep,ev,re,r,rp)
+function cod.desrepop(e,tp,eg,ep,ev,re,r,rp)
 	local tc=e:GetLabelObject()
-	if tc:GetFlagEffectLabel(id)~=e:GetLabel() then
-		e:Reset()
-		return false
-	else return true end
-end
-function cod.desop(e,tp,eg,ep,ev,re,r,rp)
-	Duel.Destroy(e:GetLabelObject(),REASON_EFFECT)
+	if Duel.Destroy(tc,REASON_EFFECT)>0 then
+		Duel.BreakEffect()
+		Duel.Destroy(e:GetHandler(),REASON_EFFECT)
+	end
 end
