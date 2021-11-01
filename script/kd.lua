@@ -117,3 +117,36 @@ function Qued.desop(tc)
 		Duel.Destroy(tc,REASON_EFFECT)
 	end
 end
+
+--Get ATK of all monster and return the total halved
+--checks mzone by sequence
+--args are e and t=table 
+function Qued.GetValues(e,t)
+	--insters into t at an index a new table with getfieldid (0) and current atk (1)
+	for i=0,#t do
+		if Duel.GetFirstMatchingCard(aux.FilterBoolFunction(Card.IsSequence,i),e:GetHandlerPlayer(),LOCATION_MZONE,0,nil)~=nil then
+			local tc=Duel.GetFirstMatchingCard(aux.FilterBoolFunction(Card.IsSequence,i),e:GetHandlerPlayer(),LOCATION_MZONE,0,nil)
+			local tcID=tc:GetFieldID()
+			local tcAT=tc:GetAttack()
+			--first register
+			if t[i]==0 then
+				t[i]={}
+				t[i][0]=tcID
+				t[i][1]=tcAT
+			else
+				--new register at same index
+				if t[i][0]~=tcID then
+					t[0]=tcID
+					t[1]=tcAT
+				end
+			end
+		else
+			--clean up when monster leaves field
+			if t[i]~=0 then
+				if type(t[i])=='table' then
+					t[i]=0
+				end
+			end
+		end
+	end
+end

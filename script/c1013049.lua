@@ -10,16 +10,14 @@ function c1013049.initial_effect(c)
 	--Place
 	Qued.AddRPepeEffect(c,id)
 	--Gain ATK
-	--Gain ATK
-	--broken
-	-- local e1=Effect.CreateEffect(c)
-	-- e1:SetType(EFFECT_TYPE_FIELD)
-	-- e1:SetCode(EFFECT_UPDATE_ATTACK)
-	-- e1:SetTarget(aux.TargetBoolFunction(Card.IsRace,RACE_ZOMBIE))
-	-- e1:SetTargetRange(1,0)
-	-- e1:SetRange(LOCATION_PZONE)
-	-- e1:SetValue(cod.val)
-	-- c:RegisterEffect(e1)
+	local e1=Effect.CreateEffect(c)
+	e1:SetType(EFFECT_TYPE_FIELD)
+	e1:SetCode(EFFECT_UPDATE_ATTACK)
+	e1:SetTarget(aux.TargetBoolFunction(Card.IsRace,RACE_ZOMBIE))
+	e1:SetTargetRange(LOCATION_MZONE,0)
+	e1:SetRange(LOCATION_PZONE)
+	e1:SetValue(cod.val)
+	c:RegisterEffect(e1)
 	--Destroy
 	local e2=Effect.CreateEffect(c)
 	e2:SetDescription(aux.Stringid(id, 0))
@@ -33,9 +31,17 @@ function c1013049.initial_effect(c)
 	e2:SetOperation(cod.desop)
 	c:RegisterEffect(e2)
 end
+cod.vt={0,0,0,0,0,0}
 
-function (e,c)
-	return Duel.GetMatchingGroup(Card.IsRace,c:GetControler(),LOCATION_MZONE,0,nil,RACE_ZOMBIE):GetSum(Card.GetAttack)/2
+function cod.val(e)
+	Qued.GetValues(e,cod.vt)
+	local val=0
+	for k,v in ipairs(cod.vt) do
+		if type(v)=='table' then
+			val=val + v[1]
+		end
+	end
+	return val/2
 end
 
 function cod.filter(c,tp)
@@ -49,6 +55,7 @@ function cod.descon(e,tp,eg,ep,ev,re,r,rp)
 			return true
 		end
 	else
+		--to be removed later?
 		if eg:IsExists(cod.filter,1,nil,tp) then
 			local seq=nil
 			for tc in aux.Next(eg) do
