@@ -39,7 +39,7 @@ function Qued.chkfilter(c,id)
 	if seq==0 and c:GetCode()==id and c:GetFlagEffect(id+seq)==1 and prev then
 		return true
 	end
-	return c:GetFlagEffect(id+seq)==0 and prev
+	return c:GetFlagEffect(id+seq+1)==0 and prev
 end
 function Qued.checkop(c,id)
 	return function(e,tp,eg,ep,ev,re,r,rp)
@@ -47,9 +47,9 @@ function Qued.checkop(c,id)
 		local g=Duel.GetMatchingGroup(Qued.chkfilter,tp,LOCATION_PZONE,0,nil,id)
 		if #g>0 then
 			for tc in aux.Next(g) do
-				tc:ResetFlagEffect(id+tot-tc:GetSequence())
+				tc:ResetFlagEffect(id+tot-(tc:GetSequence()+1))
 				Duel.RaiseSingleEvent(tc,EVENT_CUSTOM+id,e,0,tp,tp,0)
-				tc:RegisterFlagEffect(id+tc:GetSequence(),RESET_EVENT+RESETS_STANDARD,0,1)
+				tc:RegisterFlagEffect(id+tc:GetSequence()+1,RESET_EVENT+RESETS_STANDARD,0,1)
 			end
 		end
 	end
