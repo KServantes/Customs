@@ -34,14 +34,15 @@ function cod.cfilter(c)
 	return c:IsAbleToGrave() and c:IsType(TYPE_NORMAL+TYPE_PENDULUM)
 end
 function cod.spcost(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.IsExistingMatchingCard(cod.cfilter,tp,LOCATION_HAND+LOCATION_FIELD,0,1,nil) end
+	if chk==0 then return Duel.IsExistingMatchingCard(cod.cfilter,tp,LOCATION_HAND+LOCATION_ONFIELD,0,1,nil) end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
-	local g=Duel.SelectMatchingCard(tp,cod.cfilter,tp,LOCATION_HAND+LOCATION_FIELD,0,1,1,nil)
+	local g=Duel.SelectMatchingCard(tp,cod.cfilter,tp,LOCATION_HAND+LOCATION_ONFIELD,0,1,1,nil)
 	e:SetLabel(g:GetFirst():GetLevel())
 	Duel.SendtoGrave(g,REASON_EFFECT)
 end
 function cod.spfilter(c,e,tp)
-	return c:IsType(TYPE_FUSION+TYPE_PENDULUM+TYPE_NORMAL) and Duel.GetLocationCountFromEx(tp)>0 and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
+	local types=TYPE_FUSION+TYPE_PENDULUM+TYPE_NORMAL
+	return c:GetType()&(types)==types and Duel.GetLocationCountFromEx(tp)>0 and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
 end
 function cod.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.IsExistingMatchingCard(cod.spfilter,tp,LOCATION_EXTRA,0,1,nil,e,tp) end

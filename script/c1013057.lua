@@ -30,7 +30,7 @@ function cod.filter(c,tp)
 	return (c:IsLocation(LOCATION_MZONE) and c:GetControler()==1-tp) or (c:IsFaceup() and c:IsAbleToGrave())
  end
 function cod.fextra(e,tp,mg)
-	return Duel.GetMatchingGroup(cod.filter,tp,LOCATION_EXTRA+LOCATION_PZONE,LOCATION_MZONE,nil)
+	return Duel.GetMatchingGroup(cod.filter,tp,LOCATION_EXTRA+LOCATION_PZONE,LOCATION_MZONE,0,nil)
 end
 function cod.extratg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if e:IsHasType(EFFECT_TYPE_ACTIVATE) then
@@ -39,11 +39,7 @@ function cod.extratg(e,tp,eg,ep,ev,re,r,rp,chk)
 end
 
 function cod.cfilter(c)
-	if c:IsType(TYPE_PENDULUM) then
-		return c:IsType(TYPE_FUSION)
-	else
-		return false
-	end
+	return c:GetType()&(TYPE_FUSION+TYPE_PENDULUM)===TYPE_PENDULUM+TYPE_FUSION
 end
 function cod.pltg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.IsExistingMatchingCard(cod.cfilter,tp,LOCATION_EXTRA,0,1,nil) end
