@@ -1,20 +1,20 @@
 --Pendulum Bone Mouse
 local cod,id=GetID()
+Duel.LoadScript('kd.lua')
 function c1013047.initial_effect(c)
 	--Pendulum Set
 	Pendulum.AddProcedure(c)
 	--Recover Materials
 	local e1=Effect.CreateEffect(c)
 	e1:SetDescription(aux.Stringid(id,0))
-	e1:SetProperty(EFFECT_FLAG_DELAY)
-	e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
-	e1:SetCategory(CATEGORY_TOHAND)
-	e1:SetCode(EVENT_SPSUMMON_SUCCESS)
+	e1:SetProperty(EFFECT_FLAG_NO_TURN_RESET)
+	e1:SetType(EFFECT_TYPE_IGNITION)
+	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e1:SetRange(LOCATION_PZONE)
 	e1:SetCountLimit(1)
-	e1:SetCondition(cod.rccon)
-	e1:SetTarget(cod.rctg)
-	e1:SetOperation(cod.rcop)
+	e1:SetCost(cod.spcost)
+	e1:SetTarget(cod.sptg)
+	e1:SetOperation(cod.spop)
 	c:RegisterEffect(e1)
 	--Draw
 	local e2=Effect.CreateEffect(c)
@@ -29,37 +29,41 @@ function c1013047.initial_effect(c)
 	c:RegisterEffect(e2)
 end
 
---Recover
-function cod.sumfilter(c)
-	if not c:IsType(TYPE_FUSION) then return false end
-	return c:IsType(TYPE_PENDULUM) and c:GetSummonType()==SUMMON_TYPE_FUSION and c:GetMaterialCount()~=0
-		and c:GetMaterialCount() == c:GetMaterial():FilterCount(aux.AND(Card.IsFaceup, aux.FilterBoolFunction(Card.IsLocation,LOCATION_EXTRA)),nil)
+--Special Summon
+function cod.cfilter(c)
+	return c:IsAbleToGrave() and c:IsType(TYPE_NORMAL+TYPE_PENDULUM)
 end
-function cod.rccon(e,tp,eg,ep,ev,re,r,rp)
-	return eg:IsExists(cod.sumfilter,1,nil) 
+function cod.spcost(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return Duel.IsExistingMatchingCard(cod.cfilter,tp,LOCATION_HAND+LOCATION_FIELD,0,1,nil) end
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
+	local g=Duel.SelectMatchingCard(tp,cod.cfilter,tp,LOCATION_HAND+LOCATION_FIELD,0,1,1,nil)
+	e:SetLabel(g:GetFirst():GetLevel())
+	Duel.SendtoGrave(g,REASON_EFFECT)
 end
-function cod.rctg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return e:GetHandler():IsDestructable() 
-		and Duel.IsExistingMatchingCard(cod.sumfilter,tp,LOCATION_MZONE,0,1,nil) end
-	Duel.Destroy(e:GetHandler(), REASON_EFFECT)
-	local g=Group.CreateGroup()
-	if #eg==1 then
-		g=eg:GetFirst():GetMaterial()
-	else
-		Duel.Hint(HINT_SELECTMSG,tp, HINTMSG_ATOHAND)
-		local sc=eg:FilterSelect(cod.sumfilter,1,1,nil)
-		g=sc:GetMaterial()
-	end
-	e:SetLabelObject(g)
-	g:KeepAlive()
-	Duel.SetOperationInfo(0,CATEGORY_TOHAND,g,#g,tp,LOCATION_EXTRA)
+function cod.spfilter(c,e,tp)
+	return c:IsType(TYPE_FUSION+TYPE_PENDULUM+TYPE_NORMAL) and Duel.GetLocationCountFromEx(tp)>0 and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
 end
-function cod.rcop(e,tp,eg,ep,ev,re,r,rp)
-	local mats=e:GetLabelObject()
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
-	local g=mats:Select(tp,#mats,#mats,true,nil)
-	if #g<=0 then return end
-	Duel.SendtoHand(g,nil,REASON_EFFECT)
+function cod.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return Duel.IsExistingMatchingCard(cod.spfilter,tp,LOCATION_EXTRA,0,1,nil,e,tp) end
+	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_EXTRA)
+end
+function cod.spop(e,tp,eg,ep,ev,re,r,rp)
+	local c=e:GetHandler()
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+	local sg=Duel.SelectMatchingCard(tp,cod.spfilter,tp,LOCATION_EXTRA,0,1,1,nil,e,tp)
+	if #sg<=0 then return end
+	Duel.SpecialSummon(sg,0,tp,tp,false,false,POS_FACEUP)
+	local tc=sg:GetFirst()
+	local fid=c:GetFieldID()
+	tc:RegisterFlagEffect(id,RESET_EVENT+RESETS_STANDARD,0,1,fid)
+	local e1=Effect.CreateEffect(c)
+	e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+	e1:SetCode(EVENT_PHASE+PHASE_END)
+	e1:SetCountLimit(1)
+	e1:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE)
+	e1:SetCondition(Qued.descon(tc,id,fid))
+	e1:SetOperation(Qued.desop(tc))
+	Duel.RegisterEffect(e1,tp)
 end
 
 --Draw
@@ -85,7 +89,7 @@ end
 function cod.drtg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return e:GetLabel() and Duel.IsPlayerCanDraw(tp, e:GetLabel()/2) end
 	Duel.SetTargetPlayer(tp)
-    Duel.SetTargetParam(e:GetLabel())
+    Duel.SetTargetParam(e:GetLabel()/2)
     Duel.SetOperationInfo(0,CATEGORY_DRAW,nil,0,tp,1)
 end
 function cod.drop(e,tp,eg,ep,ev,re,r,rp)
