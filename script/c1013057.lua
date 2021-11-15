@@ -39,7 +39,7 @@ function cod.extratg(e,tp,eg,ep,ev,re,r,rp,chk)
 end
 
 function cod.cfilter(c)
-	return c:GetType()&(TYPE_FUSION+TYPE_PENDULUM)===TYPE_PENDULUM+TYPE_FUSION
+	return c:GetType()&(TYPE_FUSION+TYPE_PENDULUM)==TYPE_PENDULUM+TYPE_FUSION
 end
 function cod.pltg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.IsExistingMatchingCard(cod.cfilter,tp,LOCATION_EXTRA,0,1,nil) end

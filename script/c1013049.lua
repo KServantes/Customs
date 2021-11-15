@@ -13,9 +13,9 @@ function c1013049.initial_effect(c)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_FIELD)
 	e1:SetCode(EFFECT_UPDATE_ATTACK)
-	e1:SetTarget(aux.TargetBoolFunction(Card.IsRace,RACE_ZOMBIE))
 	e1:SetTargetRange(LOCATION_MZONE,0)
 	e1:SetRange(LOCATION_PZONE)
+	e1:SetTarget(cod.tg)
 	e1:SetValue(cod.val)
 	c:RegisterEffect(e1)
 	--Destroy
@@ -31,46 +31,31 @@ function c1013049.initial_effect(c)
 	e2:SetOperation(cod.desop)
 	c:RegisterEffect(e2)
 end
-cod.vt={0,0,0,0,0,0}
+
+function cod.tg(e,c)
+	return c:IsRace(RACE_ZOMBIE) and not c:IsType(TYPE_EFFECT)
+end
 
 function cod.val(e)
-	Qued.GetValues(e,cod.vt)
-	local val=0
-	for k,v in ipairs(cod.vt) do
-		if type(v)=='table' then
-			val=val + v[1]
-		end
-	end
-	return val/2
+	local c=e:GetHandler()
+	return Qued.GetBaseAttackOnField(c)/2
 end
 
 function cod.filter(c,tp)
 	return	c:IsReason(REASON_BATTLE) and c:GetReasonCard():IsType(TYPE_PENDULUM+TYPE_NORMAL)
-		and c:IsControler(1-tp) and c:GetReasonCard():IsControler(tp)
+		and c:IsControler(1-tp) and c:GetReasonCard():IsControler(tp) and c:GetPreviousLocation()==LOCATION_MZONE
 end
 function cod.descon(e,tp,eg,ep,ev,re,r,rp)
-	if #eg==1 then
-		if cod.filter(eg:GetFirst(),tp) then
-			e:SetLabel(eg:GetFirst():GetSequence())
-			return true
-		end
-	else
-		--to be removed later?
-		if eg:IsExists(cod.filter,1,nil,tp) then
-			local seq=nil
-			for tc in aux.Next(eg) do
-				if seq==nil then
-					seq=tc:GetSequence()
-				end
-			end
-			if seq==nil then return false end
-			e:SetLabel(seq)
-			return true
-		end
+	if #eg>1 then return end
+	if cod.filter(eg:GetFirst(),tp) then
+		e:SetLabel(eg:GetFirst():GetPreviousSequence())
+		return true
 	end
 end
 function cod.desf(c,seq)
 	if seq<=4 then
+		if seq-1<=0 then return true end
+		if seq+1>=4 then return true end
 		return	c:IsSequence(seq-1) or c:IsSequence(seq+1)
 	else
 		return c:IsSequence(5) or c:IsSequence(6)

@@ -36,9 +36,6 @@ end
 function Qued.chkfilter(c,id)
 	local seq=c:GetSequence()
 	local prev=(not c:IsPreviousLocation(LOCATION_PZONE) or c:GetPreviousSequence()~=seq)
-	if seq==0 and c:GetCode()==id and c:GetFlagEffect(id+seq)==1 and prev then
-		return true
-	end
 	return c:GetFlagEffect(id+seq+1)==0 and prev
 end
 function Qued.checkop(c,id)
@@ -73,7 +70,7 @@ end
 function Qued.SpecialFilter(c,e,tp,min,max)
 	if min == max then return false end
 	local lv = c:GetLevel()
-	return lv>=min and lv<=max and c:IsType(TYPE_FUSION)
+	return lv>=min and lv<=max and c:IsType(TYPE_FUSION) 
 		and Duel.GetLocationCountFromEx(tp,tp,nil,c)>0 and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
 end
 function Qued.SpecialTarget(c)
@@ -118,16 +115,29 @@ function Qued.desop(tc)
 	end
 end
 
+--pass card to register by card
+function Qued.GetBaseAttackOnField(c)
+	local card = Card.GetMetatable(c)
+	if not card.vt then card.vt={0,0,0,0,0,0} end
+	Qued.GetValues(c,card.vt)
+	local val=0
+	for k,v in ipairs(card.vt) do
+		if type(v)=='table' then
+			val=val + v[1]
+		end
+	end
+	return val
+end
+
 --Get ATK of all monster and return the total halved
 --checks mzone by sequence
---args are e and t=table 
-function Qued.GetValues(e,t)
+function Qued.GetValues(c,t)
 	--insters into t at an index a new table with getfieldid (0) and current atk (1)
 	for i=0,#t do
-		if Duel.GetFirstMatchingCard(aux.FilterBoolFunction(Card.IsSequence,i),e:GetHandlerPlayer(),LOCATION_MZONE,0,nil)~=nil then
-			local tc=Duel.GetFirstMatchingCard(aux.FilterBoolFunction(Card.IsSequence,i),e:GetHandlerPlayer(),LOCATION_MZONE,0,nil)
+		if Duel.GetFirstMatchingCard(aux.FilterBoolFunction(Card.IsSequence,i),c:GetControler(),LOCATION_MZONE,0,nil)~=nil then
+			local tc=Duel.GetFirstMatchingCard(aux.FilterBoolFunction(Card.IsSequence,i),c:GetControler(),LOCATION_MZONE,0,nil)
 			local tcID=tc:GetFieldID()
-			local tcAT=tc:GetAttack()
+			local tcAT=tc:GetBaseAttack()
 			--first register
 			if t[i]==0 then
 				t[i]={}
@@ -135,9 +145,10 @@ function Qued.GetValues(e,t)
 				t[i][1]=tcAT
 			else
 				--new register at same index
-				if t[i][0]~=tcID then
-					t[0]=tcID
-					t[1]=tcAT
+				local idx=t[i]
+				if idx[0]~=tcID then
+					idx[0]=tcID
+					idx[1]=tcAT
 				end
 			end
 		else
