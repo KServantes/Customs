@@ -40,7 +40,8 @@ function c1013050.initial_effect(c)
 end
 
 function cod.limit(e,te,tp)
-	return te:IsActiveType(TYPE_MONSTER+TYPE_EFFECT) and te:GetHandler():GetTurnID()==Duel.GetTurnCount()
+	return te:IsActiveType(TYPE_MONSTER+TYPE_EFFECT)
+		and te:GetHandler():IsStatus(STATUS_SUMMON_TURN+STATUS_FLIP_SUMMON_TURN+STATUS_SPSUMMON_TURN)
 end
 
 function cod.mvcost(e,tp,eg,ep,ev,re,r,rp,chk)

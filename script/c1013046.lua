@@ -2,24 +2,31 @@
 local cod,id = GetID()
 function cod.initial_effect(c)
 	--Pendulum Set
-	Pendulum.AddProcedure(c)
+	Pendulum.AddProcedure(c,false)
+	--Activate
+	local e1=Effect.CreateEffect(c)
+	e1:SetDescription(1160)
+	e1:SetType(EFFECT_TYPE_ACTIVATE)
+	e1:SetCode(EVENT_FREE_CHAIN)
+	e1:SetRange(LOCATION_HAND)
+	e1:SetOperation(cod.activate)
+	c:RegisterEffect(e1)
 
 	---[Pendulum Effects]
-	--Special Summon
+	--Become Linked
 	local e1=Effect.CreateEffect(c)
 	e1:SetDescription(aux.Stringid(id,0))
-	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e1:SetType(EFFECT_TYPE_IGNITION)
 	e1:SetRange(LOCATION_PZONE)
-	e1:SetCountLimit(1,id+100)
-	e1:SetTarget(cod.sptg)
-	e1:SetOperation(cod.spop)
+	e1:SetCountLimit(1,id)
+	e1:SetTarget(cod.lktg)
+	e1:SetOperation(cod.lkop)
 	c:RegisterEffect(e1)
 
 	---[Monster Effects]
 	--Place
 	local e2=Effect.CreateEffect(c)
-	e2:SetDescription(aux.Stringid(id,1))
+	e2:SetDescription(aux.Stringid(id,2))
 	e2:SetProperty(EFFECT_FLAG_DELAY)
 	e2:SetType(EFFECT_TYPE_QUICK_O)
 	e2:SetCode(EVENT_FREE_CHAIN)
@@ -30,7 +37,7 @@ function cod.initial_effect(c)
 	c:RegisterEffect(e2)
 	--Special Summon
 	local e3=Effect.CreateEffect(c)
-	e3:SetDescription(aux.Stringid(id,2))
+	e3:SetDescription(aux.Stringid(id,3))
 	e3:SetCategory(CATEGORY_TODECK+CATEGORY_SPECIAL_SUMMON)
 	e3:SetType(EFFECT_TYPE_IGNITION)
 	e3:SetRange(LOCATION_GRAVE)
@@ -39,28 +46,47 @@ function cod.initial_effect(c)
 	c:RegisterEffect(e3)
 end
 
-
---Special in Pzone
-function cod.sfilter(c,e,tp)
-	return	c:IsType(TYPE_PENDULUM) and not c:IsType(TYPE_EFFECT) and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
+--Activate
+function cod.cfilter(c)
+	return c:GetLevel()==1 and c:IsAbleToHand()
 end
-function cod.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
-	local c=e:GetHandler()
-	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0 and c:IsDestructable()
-		and Duel.IsExistingMatchingCard(cod.sfilter,tp,LOCATION_DECK,0,1,nil,e,tp) end
-	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_DECK)
-end
-function cod.spop(e,tp,eg,ep,ev,re,r,rp)
+function cod.activate(e,tp,eg,ep,ev,re,r,rp)
 	if not e:GetHandler():IsRelateToEffect(e) then return end
-	if Duel.Destroy(e:GetHandler(),REASON_EFFECT)==0 then return end
-	local lc=Duel.GetLocationCount(tp,LOCATION_MZONE)
-	if lc<=0 then return end
-	if Duel.IsPlayerAffectedByEffect(tp,CARD_BLUEEYES_SPIRIT) then lc=1 end
-	if lc>2 then lc==3 end
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-	local g=Duel.SelectMatchingCard(tp,cod.sfilter,tp,LOCATION_DECK,0,1,lc,nil)
-	if #g<=0 then return end
-	Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP)
+	local g=Duel.GetMatchingGroup(cod.cfilter,tp,LOCATION_DECK,0,nil)
+	if g:GetCount()>0 and Duel.SelectYesNo(tp,aux.Stringid(id,1)) then
+		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
+		local sg=g:Select(tp,1,1,nil)
+		Duel.SendtoHand(sg,nil,REASON_EFFECT)
+		Duel.ConfirmCards(1-tp,sg)
+	end
+end
+
+--Become Linked
+function cod.lktg(e,tp,eg,ep,ev,re,r,rp,chk)
+	local c=e:GetHandler()
+	if chk==0 then return c:IsDestructable() end
+end
+function cod.lkop(e,tp,eg,ep,ev,re,r,rp)
+	local c=e:GetHandler()
+	local seq=c:GetSequence()
+	if not c:IsRelateToEffect(e) 
+		or Duel.Destroy(e:GetHandler(),REASON_EFFECT)==0 then return end
+	local e1=Effect.CreateEffect(c)
+    e1:SetType(EFFECT_TYPE_FIELD)
+    e1:SetCode(EFFECT_BECOME_LINKED_ZONE)
+    e1:SetLabel(seq)
+    e1:SetValue(cod.val)
+    e1:SetReset(RESET_PHASE+PHASE_END,2)
+    Duel.RegisterEffect(e1,tp)
+end
+
+function cod.val(e)
+	local seq=e:GetLabel()
+	if seq==0 then
+		return 0x1+0x2<<16*e:GetHandlerPlayer()
+	else
+		return 0x8+0x10<<16*e:GetHandlerPlayer()
+	end
 end
 
 --Place in Pzone
@@ -72,7 +98,8 @@ function cod.filter(c)
 	return c:IsType(TYPE_PENDULUM) and c:IsFaceup() and not c:IsLocation(LOCATION_PZONE)
 end
 function cod.pltg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.IsExistingMatchingCard(cod.filter, tp, LOCATION_EXTRA+LOCATION_ONFIELD, 0, 1, e:GetHandler()) end
+	if chk==0 then return (Duel.CheckLocation(tp,LOCATION_PZONE,0) or Duel.CheckLocation(tp,LOCATION_PZONE,1))
+		and Duel.IsExistingMatchingCard(cod.filter,tp,LOCATION_EXTRA+LOCATION_ONFIELD,0,1,e:GetHandler()) end
 end
 function cod.plop(e,tp,eg,ep,ev,re,r,rp)
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOZONE)
@@ -82,8 +109,13 @@ function cod.plop(e,tp,eg,ep,ev,re,r,rp)
 end
 
 --Special Summon from Pzone
-function cod.sptg2(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return e:GetHandler():IsAbleToDeck()
+function cod.pfilter(c,e,tp)
+	return c:IsCanBeSpecialSummoned(e,0,tp,false,false)
+end
+function cod.sptg2(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+	if chkc then return chkc:IsLocation(LOCATION_PZONE) and chkc:IsControler(tp) and cod.pfilter(chkc,e,tp) end
+	if chk==0 then return e:GetHandler():IsAbleToDeck() 
+		and Duel.GetLocationCount(tp,LOCATION_MZONE)>0
 		and Duel.IsExistingMatchingCard(cod.pfilter,tp,LOCATION_PZONE,0,1,nil,e,tp) end
 	Duel.SetOperationInfo(0,CATEGORY_TODECK,e:GetHandler(),1,tp,LOCATION_DECK)
 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_PZONE)
@@ -91,7 +123,7 @@ end
 function cod.spop2(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
 	if not c:IsRelateToEffect(e) then return end
-	if Duel.SendtoDeck(c,nil,REASON_EFFECT)==0 then return end
+	if Duel.SendtoDeck(c,nil,SEQ_DECKSHUFFLE,REASON_EFFECT)==0 then return end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
 	local g=Duel.SelectMatchingCard(tp,cod.pfilter,tp,LOCATION_PZONE,0,1,1,nil,e,tp)
 	if #g<=0 then return end

@@ -46,6 +46,7 @@ function cod.spfilter(c,e,tp)
 end
 function cod.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.IsExistingMatchingCard(cod.spfilter,tp,LOCATION_EXTRA,0,1,nil,e,tp) end
+	Duel.Hint(HINT_OPSELECTED,1-tp,e:GetDescription())
 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_EXTRA)
 end
 function cod.spop(e,tp,eg,ep,ev,re,r,rp)
@@ -89,6 +90,7 @@ function cod.drcost(e,tp,eg,ep,ev,re,r,rp,chk)
 end
 function cod.drtg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return e:GetLabel() and Duel.IsPlayerCanDraw(tp, e:GetLabel()/2) end
+	Duel.Hint(HINT_OPSELECTED,1-tp,e:GetDescription())
 	Duel.SetTargetPlayer(tp)
     Duel.SetTargetParam(e:GetLabel()/2)
     Duel.SetOperationInfo(0,CATEGORY_DRAW,nil,0,tp,1)

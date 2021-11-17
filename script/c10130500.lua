@@ -41,17 +41,16 @@ function cod.activate(e,tp,eg,ep,ev,re,r,rp)
 	else
 		scale=tc:GetRightScale()
 	end
-	if tc:IsRelateToEffect(e) and Duel.SendtoDeck(tc,nil,2,REASON_EFFECT)~=0 and Duel.CheckLocation(tp,LOCATION_PZONE,seq) then
-		Duel.Hint(HINT_SELECTMSG,tp,aux.Stringid(id,0))
+	if tc:IsRelateToEffect(e) and Duel.SendtoDeck(tc,nil,2,REASON_EFFECT)~=0 then
+		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOFIELD)
 		local g=Duel.SelectMatchingCard(tp,cod.scfilter,tp,LOCATION_DECK,0,1,1,nil,scale,code)
-		if g:GetCount()>0 then
-			local c=g:GetFirst()
-			Duel.MoveToField(c,tp,tp,LOCATION_PZONE,POS_FACEUP,true)
-			local te=c:GetActivateEffect()
-			local tep=c:GetControler()
-			local cost=te:GetCost()
-			if cost then cost(te,tep,eg,ep,ev,re,r,rp,1) end
-			Duel.RaiseEvent(c,EVENT_CHAIN_SOLVED,c:GetActivateEffect(),0,tp,tp,Duel.GetCurrentChain())
-		end
+		if #g<=0 then return end
+		local c=g:GetFirst()
+		Duel.MoveToField(c,tp,tp,LOCATION_PZONE,POS_FACEUP,true)
+		local te=c:GetActivateEffect()
+		local tep=c:GetControler()
+		local cost=te:GetCost()
+		if cost then cost(te,tep,eg,ep,ev,re,r,rp,1) end
+		Duel.RaiseEvent(c,EVENT_CHAIN_SOLVED,c:GetActivateEffect(),0,tp,tp,Duel.GetCurrentChain())
 	end
 end
