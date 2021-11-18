@@ -53,9 +53,11 @@ function cod.descon(e,tp,eg,ep,ev,re,r,rp)
 	end
 end
 function cod.desf(c,seq)
-	if seq<=4 then
-		if seq-1<=0 then return true end
-		if seq+1>=4 then return true end
+	if seq==0 then
+		return c:IsSequence(1)
+	elseif seq==4 then
+		return c:IsSequence(3)
+	elseif seq>0 and seq<4 then
 		return	c:IsSequence(seq-1) or c:IsSequence(seq+1)
 	else
 		return c:IsSequence(5) or c:IsSequence(6)

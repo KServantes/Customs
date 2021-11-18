@@ -30,7 +30,7 @@ function cod.filter(c,tp)
 	return (c:IsLocation(LOCATION_MZONE) and c:GetControler()==1-tp) or (c:IsFaceup() and c:IsAbleToGrave())
  end
 function cod.fextra(e,tp,mg)
-	return Duel.GetMatchingGroup(cod.filter,tp,LOCATION_EXTRA+LOCATION_PZONE,LOCATION_MZONE,0,nil)
+	return Duel.GetMatchingGroup(cod.filter,tp,LOCATION_EXTRA+LOCATION_PZONE,LOCATION_MZONE,nil,tp)
 end
 function cod.extratg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if e:IsHasType(EFFECT_TYPE_ACTIVATE) then
