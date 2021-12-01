@@ -21,6 +21,13 @@ function c1013030.initial_effect(c)
 	e3:SetTarget(c1013030.postg)
 	e3:SetOperation(c1013030.posop)
 	c:RegisterEffect(e3)
+	--alias
+	local e2=Effect.CreateEffect(c)
+	e2:SetType(EFFECT_TYPE_SINGLE)
+	e2:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
+	e2:SetCode(EFFECT_ADD_CODE)
+	e2:SetValue(66672569)
+	c:RegisterEffect(e2)
 end
 function c1013030.cfilter(c)
 	return c:IsLevelBelow(4) and c:IsType(TYPE_PENDULUM)
