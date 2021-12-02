@@ -9,6 +9,8 @@ function c1013035.initial_effect(c)
 	e2:SetType(EFFECT_TYPE_QUICK_O)
 	e2:SetRange(LOCATION_PZONE)
 	e2:SetCode(EVENT_FREE_CHAIN)
+	--for copy effect
+	e2:SetLabel(1013058)
 	e2:SetHintTiming(TIMING_BATTLE_START)
 	e2:SetCondition(c1013035.spcon)
 	e2:SetTarget(c1013035.sptg)

@@ -9,9 +9,12 @@ function c1013031.initial_effect(c)
 	e2:SetCode(EVENT_PRE_BATTLE_DAMAGE)
 	e2:SetRange(LOCATION_PZONE)
 	e2:SetCountLimit(1)
+	--for copy effect
+	e2:SetLabel(1013058)
 	e2:SetCondition(c1013031.rdcon)
 	e2:SetOperation(c1013031.rdop)
 	c:RegisterEffect(e2)
+
 end
 function c1013031.rdcon(e,tp,eg,ep,ev,re,r,rp)
 	local tc=Duel.GetAttacker()

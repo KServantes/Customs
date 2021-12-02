@@ -9,6 +9,8 @@ function c1013042.initial_effect(c)
 	e2:SetCategory(CATEGORY_DESTROY)
 	e2:SetType(EFFECT_TYPE_IGNITION)
 	e2:SetRange(LOCATION_PZONE)
+		--for copy effect
+	e2:SetLabel(1013058)
 	e2:SetCountLimit(1)
 	e2:SetCost(c1013042.cost)
 	e2:SetTarget(c1013042.target)

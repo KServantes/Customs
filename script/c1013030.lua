@@ -18,6 +18,8 @@ function c1013030.initial_effect(c)
 	e3:SetCode(EVENT_BATTLE_START)
 	e3:SetRange(LOCATION_PZONE)
 	e3:SetCountLimit(1)
+	--for copy effect
+	e3:SetLabel(1013058)
 	e3:SetTarget(c1013030.postg)
 	e3:SetOperation(c1013030.posop)
 	c:RegisterEffect(e3)

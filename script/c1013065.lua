@@ -13,6 +13,8 @@ function c1013065.initial_effect(c)
 	e2:SetType(EFFECT_TYPE_CONTINUOUS+EFFECT_TYPE_FIELD)
 	e2:SetCode(EVENT_CHAIN_SOLVING)
 	e2:SetRange(LOCATION_PZONE)
+		--for copy effect
+	e2:SetLabel(1013058)
 	e2:SetOperation(c1013065.negop)
 	c:RegisterEffect(e2)
 end

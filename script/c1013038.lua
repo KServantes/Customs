@@ -15,6 +15,8 @@ function c1013038.initial_effect(c)
 	e2:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_QUICK_O)
 	e2:SetRange(LOCATION_PZONE)
 	e2:SetCode(EVENT_FREE_CHAIN)
+	--for copy effect
+	e2:SetLabel(1013058)
 	e2:SetCountLimit(1)
 	e2:SetTarget(c1013038.sptg)
 	e2:SetOperation(c1013038.spop)

@@ -13,6 +13,8 @@ function cod.initial_effect(c)
 	e1:SetType(EFFECT_TYPE_QUICK_O)
 	e1:SetRange(LOCATION_PZONE)
 	e1:SetCode(EVENT_CHAINING)
+		--for copy effect
+	e1:SetLabel(1013058)
 	e1:SetCountLimit(1,id)
 	e1:SetCondition(cod.ngcon)
 	e1:SetTarget(cod.ngtg)

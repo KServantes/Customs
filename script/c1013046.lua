@@ -18,6 +18,8 @@ function cod.initial_effect(c)
 	e1:SetDescription(aux.Stringid(id,0))
 	e1:SetType(EFFECT_TYPE_IGNITION)
 	e1:SetRange(LOCATION_PZONE)
+		--for copy effect
+	e1:SetLabel(1013058)
 	e1:SetTarget(cod.lktg)
 	e1:SetOperation(cod.lkop)
 	c:RegisterEffect(e1)
