@@ -8,10 +8,9 @@ function cod.initial_effect(c)
 	local e1=Effect.CreateEffect(c)
 	e1:SetDescription(aux.Stringid(id,0))
 	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
-	e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
+	e1:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
 	e1:SetProperty(EFFECT_FLAG_DELAY)
 	e1:SetCode(EVENT_SPSUMMON_SUCCESS)
-	e1:SetRange(LOCATION_MZONE)
 	e1:SetCondition(cod.spcon)
 	e1:SetTarget(cod.sptg)
 	e1:SetOperation(cod.spop)
@@ -19,7 +18,7 @@ function cod.initial_effect(c)
 	--Apply Effects
 	local e2=Effect.CreateEffect(c)
 	e2:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
-	e2:SetCode(id)
+	e2:SetCode(EVENT_ADJUST)
 	e2:SetRange(LOCATION_MZONE)
 	e2:SetOperation(cod.apop)
 	c:RegisterEffect(e2)
@@ -54,11 +53,16 @@ function cod.apop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
 	local g=c:GetLinkedGroup()
 	for tc in aux.Next(g) do
-		if tc:IsRace(RACE_ZOMBIE) and tc:IsSetCard(0xf2) then
+		if tc:IsRace(RACE_ZOMBIE) and tc:IsSetCard(0xf2) then 
+			if tc:GetFlagEffect(id) >0 then return end
 			local effs={tc:GetCardEffect()}
 			for _,eff in ipairs(effs) do
 				if eff:GetLabel()==id then
-					eff:SetRange(LOCATION_MZONE)
+					local ex=eff:Clone()
+					ex:SetRange(LOCATION_MZONE)
+					ex:SetReset(RESET_EVENT+RESETS_STANDARD)
+					tc:RegisterEffect(ex)
+					tc:RegisterFlagEffect(id,RESET_EVENT+RESETS_STANDARD,0,1)
 				end
 			end
 		end
