@@ -35,15 +35,19 @@ function cod.spcon(e,tp,eg,ep,ev,re,r,rp)
 end
 function cod.spfilter(c,e,tp)
 	return c:IsType(TYPE_PENDULUM) and not c:IsType(TYPE_EFFECT) and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
+		and (Duel.GetLocationCountFromEx(tp,tp,nil,c)>0 or not c:IsLocation(LOCATION_EXTRA))
 end
 function cod.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0 and
-		Duel.IsExistingMatchingCard(cod.spfilter,tp,LOCATION_EXTRA+LOCATION_PZONE,0,1,nil,e,tp) end
-	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_PZONE+LOCATION_EXTRA)
+	local loc=LOCATION_EXTRA
+	if Duel.GetLocationCount(tp,LOCATION_MZONE)>0 then loc=loc+LOCATION_PZONE end
+	if chk==0 then return Duel.IsExistingMatchingCard(cod.spfilter,tp,loc,0,1,nil,e,tp) end
+	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,loc)
 end
 function cod.spop(e,tp,eg,ep,ev,re,r,rp)
+	local loc=LOCATION_EXTRA
+	if Duel.GetLocationCount(tp,LOCATION_MZONE)>0 then loc=loc+LOCATION_PZONE end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-	local g=Duel.SelectMatchingCard(tp,cod.spfilter,tp,LOCATION_EXTRA+LOCATION_PZONE,0,1,1,nil,e,tp)
+	local g=Duel.SelectMatchingCard(tp,cod.spfilter,tp,loc,0,1,1,nil,e,tp)
 	if #g<=0 then return end
 	Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP)
 end
