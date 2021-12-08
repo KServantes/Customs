@@ -8,6 +8,9 @@ if not Qued then
 	Qued = aux.ExtrasDeKedy
 end
 
+--Common used cards
+CARD_AZEGAHL = 1013058
+
 --Common on placed in pzone summon effect
 function Qued.AddRPepeEffect(c,id)
 	local card = Card.GetMetatable(c)
