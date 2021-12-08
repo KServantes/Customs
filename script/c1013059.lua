@@ -17,16 +17,17 @@ function c1013059.initial_effect(c)
 	e1:SetType(EFFECT_TYPE_IGNITION)
 	e1:SetRange(LOCATION_PZONE)
 	--for copy effect
-	e1:SetLabel(1013058)
+	e1:SetLabel(CARD_AZEGAHL)
 	e1:SetTarget(cod.sptg)
-	e1:SetOperation(cod.sptop)
+	e1:SetOperation(cod.spop)
 	c:RegisterEffect(e1)
 	--Place
 	local e2=Effect.CreateEffect(c)
 	e2:SetDescription(aux.Stringid(id,1))
 	e2:SetType(EFFECT_TYPE_IGNITION)
 	e2:SetRange(LOCATION_PZONE)
-	e2:SetLabel(1013058)
+	--for copy effect
+	e2:SetLabel(CARD_AZEGAHL)
 	e2:SetTarget(cod.pltg)
 	e2:SetOperation(cod.plop)
 	c:RegisterEffect(e2)
@@ -36,6 +37,7 @@ function c1013059.initial_effect(c)
 	e3:SetDescription(aux.Stringid(id,3))
 	e3:SetCategory(CATEGORY_SEARCH+CATEGORY_TOHAND)
 	e3:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
+	e3:SetProperty(EFFECT_FLAG_DELAY)
 	e3:SetCode(EVENT_SPSUMMON_SUCCESS)
 	e3:SetRange(LOCATION_MZONE)
 	e3:SetCondition(cod.thcon)
@@ -78,20 +80,20 @@ end
 
 --[ pendulum effects ]
 --special summon
-function cod.spfitler(c,e,tp)
+function cod.spfilter(c,e,tp)
 	return c:IsCanBeSpecialSummoned(e,0,tp,false,false)
 end
-function cod.sptg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
-	if chkc then return chkc:IsControler(tp) and chkc:IsLocation(LOCATION_PZONE) and chkc:IsCanBeSpecialSummoned(e,0,tp,false,false) end
+function cod.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
 		and Duel.IsExistingMatchingCard(cod.spfilter,tp,LOCATION_PZONE,0,1,e:GetHandler(),e,tp) end
+	Duel.Hint(HINT_OPSELECTED,1-tp,e:GetDescription())
 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_PZONE)
 end
 function cod.spop(e,tp,eg,ep,ev,re,r,rp)
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
 	local g=Duel.SelectMatchingCard(tp,cod.spfilter,tp,LOCATION_PZONE,0,1,1,e:GetHandler(),e,tp)
 	if #g<=0 then return end
-	Duel.SpecialSummon(e,0,tp,tp,false,false,POS_FACEUP)
+	Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP)
 end
 
 --place in pzone (p-effect)
@@ -102,6 +104,7 @@ function cod.pltg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 	if chkc then return chkc:IsLocation(LOCATION_MZONE) and chkc:IsControler(tp) and cod.plfilter(chkc) end
 	if chk==0 then return (Duel.CheckLocation(tp,LOCATION_PZONE,0) or Duel.CheckLocation(tp,LOCATION_PZONE,1))
 		and Duel.IsExistingMatchingCard(cod.plfilter,tp,LOCATION_MZONE,0,1,nil) end
+	Duel.Hint(HINT_OPSELECTED,1-tp,e:GetDescription())
 end
 function cod.plop(e,tp,eg,ep,ev,re,r,rp)
 	if not (Duel.CheckLocation(tp,LOCATION_PZONE,0) or Duel.CheckLocation(tp,LOCATION_PZONE,1)) then return end
@@ -117,11 +120,12 @@ end
 --[ monster effects ]
 --search
 function cod.confilter(c)
-	return c:IsType(TYPE_PENDULUM) and c:IsSetCard(0x2f) and not c:IsType(TYPE_EFFECT)
+	return c:IsType(TYPE_PENDULUM) and c:IsSetCard(0xf2) and not c:IsType(TYPE_EFFECT)
 end
 function cod.thcon(e,tp,eg,ep,ev,re,r,rp)
+	local c=e:GetHandler()
 	local mats=c:GetMaterial()
-	return e:GetHandler():IsSummonType(SUMMON_TYPE_FUSION) and mats and mats:IsExists(cod.confilter,1,nil)
+	return e:GetHandler():IsSummonType(SUMMON_TYPE_FUSION) and #mats>0 and mats:IsExists(cod.confilter,1,nil)
 end
 function cod.cfilter(c)
 	return c:IsSetCard(0x2f) and c:IsAbleToHand()
@@ -156,6 +160,7 @@ function cod.apop(e,tp,eg,ep,ev,re,r,rp)
 					ex:SetReset(RESET_EVENT+RESETS_STANDARD)
 					c:RegisterEffect(ex)
 					c:RegisterFlagEffect(id+tc:GetCode(),RESET_EVENT+RESETS_STANDARD,0,1)
+					c:RegisterFlagEffect(0,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_CLIENT_HINT,1,0,aux.Stringid(tc:GetCode(),10))
 				end
 			end
 		end
@@ -163,7 +168,7 @@ function cod.apop(e,tp,eg,ep,ev,re,r,rp)
 end
 
 --cannot activate
-function cod.aclimit(e,re,tp)
+function cod.actlimit(e,re,tp)
 	local con1=(re:IsHasCategory(CATEGORY_DISABLE+CATEGORY_DESTROY) or re:IsHasCategory(CATEGORY_NEGATE+CATEGORY_DESTROY))
 	local con2=(re:IsHasCategory(CATEGORY_DISABLE) or re:IsHasCategory(CATEGORY_NEGATE))
 	return (re:IsActiveType(TYPE_MONSTER) or re:IsActiveType(TYPE_SPELL) or re:IsActiveType(TYPE_TRAP)) 
