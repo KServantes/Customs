@@ -128,7 +128,7 @@ function cod.thcon(e,tp,eg,ep,ev,re,r,rp)
 	return e:GetHandler():IsSummonType(SUMMON_TYPE_FUSION) and #mats>0 and mats:IsExists(cod.confilter,1,nil)
 end
 function cod.cfilter(c)
-	return c:IsSetCard(0x2f) and c:IsAbleToHand()
+	return c:IsSetCard(0xf2) and c:IsAbleToHand()
 end
 function cod.thtg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.IsExistingMatchingCard(cod.cfilter,tp,LOCATION_DECK,0,1,nil) end
