@@ -7,15 +7,16 @@ function c1013059.initial_effect(c)
 	--Fusion Summon
 	c:EnableReviveLimit()
 	Fusion.AddProcMix(c,true,true,cod.ffilter,aux.FilterBoolFunctionEx(Card.IsAttribute,ATTRIBUTE_DARK))
+
 	---[ Pendulum Effects ]
-	--Place
-	Qued.AddRPepeEffect(c,id)
 	--Special Summon
 	local e1=Effect.CreateEffect(c)
 	e1:SetDescription(aux.Stringid(id,0))
 	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e1:SetType(EFFECT_TYPE_IGNITION)
+	e1:SetProperty(EFFECT_FLAG_NO_TURN_RESET)
 	e1:SetRange(LOCATION_PZONE)
+	e1:SetCountLimit(1)
 	--for copy effect
 	e1:SetLabel(CARD_AZEGAHL)
 	e1:SetTarget(cod.sptg)
@@ -25,52 +26,44 @@ function c1013059.initial_effect(c)
 	local e2=Effect.CreateEffect(c)
 	e2:SetDescription(aux.Stringid(id,1))
 	e2:SetType(EFFECT_TYPE_IGNITION)
+	e2:SetProperty(EFFECT_FLAG_NO_TURN_RESET)
 	e2:SetRange(LOCATION_PZONE)
+	e2:SetCountLimit(1)
 	--for copy effect
 	e2:SetLabel(CARD_AZEGAHL)
 	e2:SetTarget(cod.pltg)
 	e2:SetOperation(cod.plop)
 	c:RegisterEffect(e2)
+
 	--[ Monster Effects ]
-	--Search
+	--immune
 	local e3=Effect.CreateEffect(c)
-	e3:SetDescription(aux.Stringid(id,3))
-	e3:SetCategory(CATEGORY_SEARCH+CATEGORY_TOHAND)
-	e3:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
-	e3:SetProperty(EFFECT_FLAG_DELAY)
-	e3:SetCode(EVENT_SPSUMMON_SUCCESS)
+	e3:SetDescription(3100)
+	e3:SetType(EFFECT_TYPE_SINGLE)
+	e3:SetCode(EFFECT_IMMUNE_EFFECT)
+	e3:SetProperty(EFFECT_FLAG_SINGLE_RANGE+EFFECT_FLAG_CLIENT_HINT)
 	e3:SetRange(LOCATION_MZONE)
-	e3:SetCondition(cod.thcon)
-	e3:SetTarget(cod.thtg)
-	e3:SetOperation(cod.thop)
+	e3:SetCondition(cod.imcon)
+	e3:SetValue(cod.efilter)
 	c:RegisterEffect(e3)
 	--Gain Effects
 	local e4=Effect.CreateEffect(c)
 	e4:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
 	e4:SetCode(EVENT_ADJUST)
 	e4:SetRange(LOCATION_MZONE)
-	e4:SetCondition(cod.thcon)
+	e4:SetCondition(cod.fuscon)
 	e4:SetOperation(cod.apop)
 	c:RegisterEffect(e4)
-	--Cannot Activate
-	local e5=Effect.CreateEffect(c)
-	e5:SetType(EFFECT_TYPE_FIELD)
-	e5:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
-	e5:SetCode(EFFECT_CANNOT_ACTIVATE)
-	e5:SetRange(LOCATION_MZONE)
-	e5:SetTargetRange(1,1)
-	e5:SetValue(cod.actlimit)
-	c:RegisterEffect(e5)
 	--Place
-	local e6=Effect.CreateEffect(c)
-	e6:SetDescription(aux.Stringid(id,2))
-	e6:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
-	e6:SetCode(EVENT_DESTROYED)
-	e6:SetProperty(EFFECT_FLAG_DELAY+EFFECT_FLAG_DAMAGE_STEP)
-	e6:SetCondition(cod.pencon)
-	e6:SetTarget(cod.pentg)
-	e6:SetOperation(cod.penop)
-	c:RegisterEffect(e6)
+	local e5=Effect.CreateEffect(c)
+	e5:SetDescription(aux.Stringid(id,2))
+	e5:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
+	e5:SetCode(EVENT_DESTROYED)
+	e5:SetProperty(EFFECT_FLAG_DELAY+EFFECT_FLAG_DAMAGE_STEP)
+	e5:SetCondition(cod.pencon)
+	e5:SetTarget(cod.pentg)
+	e5:SetOperation(cod.penop)
+	c:RegisterEffect(e5)
 end
 
 --fusion filter
@@ -118,33 +111,24 @@ function cod.plop(e,tp,eg,ep,ev,re,r,rp)
 end
 
 --[ monster effects ]
---search
+--immune
+function cod.imcon(e,tp,eg,ep,ev,re,r,rp)
+	return aux.fuslimit and e:GetHandler():IsStatus(STATUS_SPSUMMON_TURN)
+end
+function cod.efilter(e,te)
+	if te:GetHandler():GetCode()==id then return false end
+	return te:GetOwner()~=e:GetOwner()
+end
+
+--apply peffects
 function cod.confilter(c)
 	return c:IsType(TYPE_PENDULUM) and c:IsSetCard(0xf2) and not c:IsType(TYPE_EFFECT)
 end
-function cod.thcon(e,tp,eg,ep,ev,re,r,rp)
+function cod.fuscon(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
 	local mats=c:GetMaterial()
 	return e:GetHandler():IsSummonType(SUMMON_TYPE_FUSION) and #mats>0 and mats:IsExists(cod.confilter,1,nil)
 end
-function cod.cfilter(c)
-	return c:IsSetCard(0xf2) and c:IsAbleToHand()
-end
-function cod.thtg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.IsExistingMatchingCard(cod.cfilter,tp,LOCATION_DECK,0,1,nil) end
-	Duel.SetOperationInfo(0,CATEGORY_SEARCH+CATEGORY_TOHAND,nil,1,tp,LOCATION_DECK)
-end
-function cod.thop(e,tp,eg,ep,ev,re,r,rp)
-	if not e:GetHandler():IsRelateToEffect(e) then return end
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
-	local g=Duel.SelectMatchingCard(tp,cod.cfilter,tp,LOCATION_DECK,0,1,1,nil)
-	if #g>0 then
-		Duel.SendtoHand(g,nil,REASON_EFFECT)
-		Duel.ConfirmCards(1-tp,g)
-	end
-end
-
---apply peffects
 function cod.apop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
 	local g=c:GetMaterial()
@@ -165,14 +149,6 @@ function cod.apop(e,tp,eg,ep,ev,re,r,rp)
 			end
 		end
 	end
-end
-
---cannot activate
-function cod.actlimit(e,re,tp)
-	local con1=(re:IsHasCategory(CATEGORY_DISABLE+CATEGORY_DESTROY) or re:IsHasCategory(CATEGORY_NEGATE+CATEGORY_DESTROY))
-	local con2=(re:IsHasCategory(CATEGORY_DISABLE) or re:IsHasCategory(CATEGORY_NEGATE))
-	return (re:IsActiveType(TYPE_MONSTER) or re:IsActiveType(TYPE_SPELL) or re:IsActiveType(TYPE_TRAP)) 
-		and (con1 or con2)
 end
 
 --place in pzone (m-effect)
