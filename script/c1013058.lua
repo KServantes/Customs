@@ -1,5 +1,6 @@
 --Azegahl, Pendulum Soul Reaper
 local cod,id=GetID()
+Duel.LoadScript('kd.lua')
 function cod.initial_effect(c)
 	--Link Summon
 	c:EnableReviveLimit()
@@ -20,7 +21,7 @@ function cod.initial_effect(c)
 	e2:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
 	e2:SetCode(EVENT_ADJUST)
 	e2:SetRange(LOCATION_MZONE)
-	e2:SetOperation(cod.apop)
+	e2:SetOperation(Qued.applyop)
 	c:RegisterEffect(e2)
 end
 
@@ -50,25 +51,4 @@ function cod.spop(e,tp,eg,ep,ev,re,r,rp)
 	local g=Duel.SelectMatchingCard(tp,cod.spfilter,tp,loc,0,1,1,nil,e,tp)
 	if #g<=0 then return end
 	Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP)
-end
-
---apply effects
-function cod.apop(e,tp,eg,ep,ev,re,r,rp)
-	local c=e:GetHandler()
-	local g=c:GetLinkedGroup()
-	for tc in aux.Next(g) do
-		if tc:IsRace(RACE_ZOMBIE) and tc:IsSetCard(0xf2) then 
-			if tc:GetFlagEffect(id) >0 then return end
-			local effs={tc:GetCardEffect()}
-			for _,eff in ipairs(effs) do
-				if eff:GetLabel()==id then
-					local ex=eff:Clone()
-					ex:SetRange(LOCATION_MZONE)
-					ex:SetReset(RESET_EVENT+RESETS_STANDARD)
-					tc:RegisterEffect(ex)
-					tc:RegisterFlagEffect(id,RESET_EVENT+RESETS_STANDARD,0,1)
-				end
-			end
-		end
-	end
 end

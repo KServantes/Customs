@@ -164,3 +164,58 @@ function Qued.GetValues(c,t)
 		end
 	end
 end
+
+--operation for azegahl
+function Qued.applyop(e,tp,eg,ep,ev,re,r,rp)
+	local c=e:GetHandler()
+	local g=c:GetLinkedGroup()
+	for tc in aux.Next(g) do
+		if tc:IsRace(RACE_ZOMBIE) and tc:IsSetCard(0xf2) then 
+			if tc:GetFlagEffect(CARD_AZEGAHL)>0 then return end
+			local effs={tc:GetCardEffect()}
+			for _,eff in ipairs(effs) do
+				if eff:GetLabel()==CARD_AZEGAHL then
+					--apply cloned effect in mzone
+					local ex=eff:Clone()
+					ex:SetLabel(CARD_AZEGAHL*2)
+					ex:SetRange(LOCATION_MZONE)
+					ex:SetReset(RESET_EVENT+RESETS_STANDARD)
+					tc:RegisterEffect(ex)
+					tc:RegisterFlagEffect(CARD_AZEGAHL,RESET_EVENT+RESETS_STANDARD,0,1)
+					tc:RegisterFlagEffect(0,RESET_EVENT+RESETS_STANDARD,EFFECT_FLAG_CLIENT_HINT,1,0,aux.Stringid(CARD_AZEGAHL,1))
+				end
+			end
+		end
+	end
+	if c:GetFlagEffect(CARD_AZEGAHL)==0 then
+		local le=Effect.CreateEffect(c)
+		le:SetType(EFFECT_TYPE_CONTINUOUS+EFFECT_TYPE_SINGLE)
+		le:SetCode(EVENT_LEAVE_FIELD)
+		le:SetOperation(Qued.resetop)
+		le:SetReset(RESET_EVENT+RESETS_STANDARD_EXC_GRAVE)
+		c:RegisterEffect(le,true)
+		c:RegisterFlagEffect(CARD_AZEGAHL,RESET_EVENT+RESETS_STANDARD,0,1)
+	end
+end
+
+
+function Qued.resfilter(c)
+	return c:GetFlagEffect(CARD_AZEGAHL)>0
+end
+function Qued.resetop(e,tp,eg,ep,ev,re,r,rp)
+	local g=Duel.GetMatchingGroup(Qued.resfilter,tp,LOCATION_MZONE,0,e:GetHandler())
+	if #g<=0 then return end
+	for tc in aux.Next(g) do
+		local effs={tc:GetCardEffect()}
+		for _,eff in ipairs(effs) do
+			--reset each apply effect
+			if eff:GetLabel()==(CARD_AZEGAHL*2) then
+				eff:Reset()
+			end
+		end
+		--reset flag of card
+		tc:ResetFlagEffect(CARD_AZEGAHL)
+		--reset hint msg
+		tc:ResetFlagEffect(0)
+	end
+end
