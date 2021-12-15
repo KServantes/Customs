@@ -17,7 +17,7 @@ function c1013050.initial_effect(c)
 	e1:SetTargetRange(0,LOCATION_MZONE)
 	e1:SetValue(-2200)
 		--for copy effect
-	e1:SetLabel(1013058)
+	e1:SetLabel(CARD_AZEGAHL)
 	c:RegisterEffect(e1)
 	--
 	local e2=Effect.CreateEffect(c)
@@ -28,7 +28,7 @@ function c1013050.initial_effect(c)
 	e2:SetTargetRange(0,1)
 	e2:SetValue(cod.limit)
 		--for copy effect
-	e2:SetLabel(1013058)
+	e2:SetLabel(CARD_AZEGAHL)
 	c:RegisterEffect(e2)
 	--Move
 	local e3=Effect.CreateEffect(c)
@@ -41,7 +41,7 @@ function c1013050.initial_effect(c)
 	e3:SetTarget(cod.mvtg)
 	e3:SetOperation(cod.mvop)
 		--for copy effect
-	e3:SetLabel(1013058)
+	e3:SetLabel(CARD_AZEGAHL)
 	c:RegisterEffect(e3)
 end
 
