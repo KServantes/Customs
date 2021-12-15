@@ -69,24 +69,31 @@ function cod.lktg(e,tp,eg,ep,ev,re,r,rp,chk)
 end
 function cod.lkop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
-	local seq=c:GetSequence()
+	local seq,loc=c:GetSequence(),c:GetLocation()
 	if not c:IsRelateToEffect(e) 
 		or Duel.Destroy(e:GetHandler(),REASON_EFFECT)==0 then return end
 	local e1=Effect.CreateEffect(c)
     e1:SetType(EFFECT_TYPE_FIELD)
     e1:SetCode(EFFECT_BECOME_LINKED_ZONE)
-    e1:SetLabel(seq)
+    e1:SetLabel(seq,loc)
     e1:SetValue(cod.val)
     e1:SetReset(RESET_PHASE+PHASE_END,2)
     Duel.RegisterEffect(e1,tp)
 end
 
 function cod.val(e)
-	local seq=e:GetLabel()
-	if seq==0 then
-		return 0x1+0x2<<16*e:GetHandlerPlayer()
+	local seq,loc=e:GetLabel()
+	local t={0x2,0x1+0x4,0x2+0x8,0x4+0x10,0x8}
+	if loc~=LOCATION_MZONE then
+		if seq==0 then
+			return 0x1+0x2<<16*e:GetHandlerPlayer()
+		else
+			return 0x8+0x10<<16*e:GetHandlerPlayer()
+		end
 	else
-		return 0x8+0x10<<16*e:GetHandlerPlayer()
+		if seq<5 then
+			return t[seq]<<16*e:GetHandlerPlayer()
+		end
 	end
 end
 
