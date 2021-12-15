@@ -35,7 +35,7 @@ function c1013050.initial_effect(c)
 	e3:SetDescription(aux.Stringid(id,0))
 	e3:SetProperty(EFFECT_FLAG_NO_TURN_RESET)
 	e3:SetType(EFFECT_TYPE_IGNITION)
-	e3:SetRange(LOCATION_PZONE+LOCATION_SZONE)
+	e3:SetRange(LOCATION_PZONE)
 	e3:SetCountLimit(1)
 	e3:SetCost(cod.mvcost)
 	e3:SetTarget(cod.mvtg)
@@ -56,10 +56,14 @@ function cod.mvcost(e,tp,eg,ep,ev,re,r,rp,chk)
 end
 function cod.mvtg(e,tp,eg,ep,ev,re,r,rp,chk)
 	local c=e:GetHandler()
-	if c:IsSequence(4) then
-		seq=3
+	if c:IsLocation(LOCATION_MZONE) then
+		seq=c:GetSequence()
 	else
-		seq=1
+		if c:IsSequence(4) then
+			seq=3
+		else
+			seq=1
+		end
 	end
 	if chk==0 then return Duel.CheckLocation(tp,LOCATION_SZONE,seq) end
 	e:SetLabel(seq)
@@ -75,6 +79,9 @@ function cod.mvop(e,tp,eg,ep,ev,re,r,rp,chk)
 	e1:SetValue(TYPE_SPELL+TYPE_CONTINUOUS)
 	e1:SetReset(RESET_EVENT+0x1fc0000)
 	c:RegisterEffect(e1)
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOZONE)
-	Duel.MoveSequence(c,seq)
+	if c:GetLocation()==LOCATION_SZONE then
+		Duel.MoveSequence(c,seq)
+	else
+		Duel.MoveToField(c,tp,tp,LOCATION_SZONE,POS_FACEUP,true,(1<<seq))
+	end
 end
