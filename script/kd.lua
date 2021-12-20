@@ -146,9 +146,10 @@ function Qued.GetValues(c,t)
 				t[i]={}
 				t[i][0]=tcID
 				t[i][1]=tcAT
+			elseif t[i]==nil then
+				return 
 			else
 				--new register at same index
-				Debug.Message(i)
 				local idx=t[i]
 				if idx[0]~=tcID then
 					idx[0]=tcID
