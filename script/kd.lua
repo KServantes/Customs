@@ -118,55 +118,6 @@ function Qued.desop(tc)
 	end
 end
 
---pass card to register by card
-function Qued.GetBaseAttackOnField(c)
-	local card = Card.GetMetatable(c)
-	if not card.vt then card.vt={0,0,0,0,0,0} end
-	Qued.GetValues(c,card.vt)
-	local val=0
-	for k,v in ipairs(card.vt) do
-		if type(v)=='table' then
-			val=val + v[1]
-		end
-	end
-	return val
-end
-
---Get ATK of all monster and return the total halved
---checks mzone by sequence
-function Qued.GetValues(c,t)
-	--insters into t at an index a new table with getfieldid (0) and current atk (1)
-	for i=0,#t do
-		if Duel.GetFirstMatchingCard(aux.FilterBoolFunction(Card.IsSequence,i),c:GetControler(),LOCATION_MZONE,0,nil)~=nil then
-			local tc=Duel.GetFirstMatchingCard(aux.FilterBoolFunction(Card.IsSequence,i),c:GetControler(),LOCATION_MZONE,0,nil)
-			local tcID=tc:GetFieldID()
-			local tcAT=tc:GetBaseAttack()
-			--first register
-			if t[i]==0 then
-				t[i]={}
-				t[i][0]=tcID
-				t[i][1]=tcAT
-			elseif t[i]==nil then
-				return 
-			else
-				--new register at same index
-				local idx=t[i]
-				if idx[0]~=tcID then
-					idx[0]=tcID
-					idx[1]=tcAT
-				end
-			end
-		else
-			--clean up when monster leaves field
-			if t[i]~=0 then
-				if type(t[i])=='table' then
-					t[i]=0
-				end
-			end
-		end
-	end
-end
-
 --operation for azegahl
 function Qued.applyop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
