@@ -45,7 +45,7 @@ function cod.ngop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
 	if Duel.NegateActivation(ev) then
 		local tc=eg:GetFirst()
-		if not tc then return end
+		if not tc or not tc:IsOnField() then return end
 		if tc:IsType(TYPE_PENDULUM) then
 			local flag=false
 			if flag==false then
