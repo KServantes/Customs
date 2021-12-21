@@ -17,9 +17,7 @@ function c1013051.initial_effect(c)
 	e1:SetTargetRange(LOCATION_MZONE,0)
 	e1:SetTarget(aux.TargetBoolFunction(Card.IsRace,RACE_ZOMBIE))
 	c:RegisterEffect(e1)
-	local e1b=e1:Clone()
-	e1b:SetCode(id)
-	c:RegisterEffect(e1b)
+	--Change DMG
 	local e2=Effect.CreateEffect(c)
 	e2:SetType(EFFECT_TYPE_FIELD)
 	e2:SetCode(EFFECT_CHANGE_BATTLE_DAMAGE)
@@ -27,7 +25,7 @@ function c1013051.initial_effect(c)
 	e2:SetRange(LOCATION_PZONE)
 	e2:SetCondition(cod.rdcon)
 	e2:SetTargetRange(0,1)
-	e2:SetValue(1700)
+	e2:SetValue(cod.rdval)
 	c:RegisterEffect(e2)
 	--Pendulum
 	local e3=Effect.CreateEffect(c)
@@ -41,7 +39,18 @@ end
 function cod.rdcon(e)
 	local tp=e:GetHandlerPlayer()
 	local ac=Duel.GetAttacker()
-	return ac:GetControler()==tp and ac:IsHasEffect(id) and Duel.GetAttackTarget()==nil
+	return ac:GetControler()==tp and ac:GetEffectCount(EFFECT_DIRECT_ATTACK)<2
+		and Duel.GetAttackTarget()==nil and ac:IsRace(RACE_ZOMBIE) 
+			and Duel.GetFieldGroupCount(tp,0,LOCATION_MZONE)>0
+end
+
+function cod.rdval(e,damp)
+	local ac=Duel.GetAttacker()
+	if ac:GetAttack()<=1700 then
+		return -1
+	else
+		return 1700
+	end
 end
 
 function cod.cfilter(c,e,tp)
