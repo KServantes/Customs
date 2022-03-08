@@ -21,7 +21,7 @@ function cod.initial_effect(c)
 	e2:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
 	e2:SetCode(EVENT_ADJUST)
 	e2:SetRange(LOCATION_MZONE)
-	e2:SetOperation(Qued.applyop)
+	e2:SetOperation(Qued.Azegahl)
 	c:RegisterEffect(e2)
 end
 
