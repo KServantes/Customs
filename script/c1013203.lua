@@ -4,15 +4,14 @@ cod.atts={["ctpe"]=0x1021}
 Duel.LoadScript("kd.lua")
 function cod.initial_effect(c)
 	--attributes
-	Qued.addBOAttributes(c,id,false)
+	Qued.AddAttributes(c,false)
 	--Special Summon
 	local e1=Effect.CreateEffect(c)
 	e1:SetDescription(aux.Stringid(id,0))
 	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e1:SetType(EFFECT_TYPE_ACTIVATE)
 	e1:SetProperty(EFFECT_FLAG_DELAY)
-	e1:SetCode(EVENT_RECOVER)
-	e1:SetCondition(cod.actcon)
+	e1:SetCode(EVENT_CUSTOM+id)
 	e1:SetTarget(cod.acttg)
 	e1:SetOperation(cod.actop)
 	c:RegisterEffect(e1)
@@ -34,9 +33,36 @@ function cod.initial_effect(c)
 	e3:SetTarget(cod.sctg)
 	e3:SetOperation(cod.scop)
 	c:RegisterEffect(e3)
+	aux.GlobalCheck(cod,function()
+		cod.val={}
+		cod.val[0]=0
+		local ge1=Effect.CreateEffect(c)
+		ge1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+		ge1:SetCode(EVENT_RECOVER)
+		ge1:SetOperation(cod.checkop)
+		Duel.RegisterEffect(ge1,0)
+		local ge2=ge1:Clone()
+		ge2:SetCode(EVENT_PHASE+PHASE_END)
+		ge2:SetCountLimit(1)
+		ge2:SetOperation(cod.resetop)
+		Duel.RegisterEffect(ge2,0)
+	end)
 	Duel.AddCustomActivityCounter(id,ACTIVITY_CHAIN,cod.chainfilter)
 end
-
+function cod.checkop(e,tp,eg,ep,ev,re,r,rp)
+	local rec=cod.val[0]
+	local c=e:GetHandler()
+	if ep==tp then
+		rec=rec+ev
+		if rec>=1300 then
+			Duel.RaiseEvent(Group.FromCards(c),EVENT_CUSTOM+id,re,r,rp,ep,ev)
+		end
+		cod.val[0]=rec
+	end
+end
+function cod.resetop(e,tp,eg,ep,ev,re,r,rp)
+	cod.val[0]=0
+end
 --
 function cod.chainfilter(re)
 	return not (re:IsActiveType(TYPE_SPELL) and re:GetHandler():IsSetCard(0xd3d))
@@ -47,9 +73,6 @@ function cod.handcon(e)
 end
 
 --Special Summon
-function cod.actcon(e,tp,eg,ep,ev,re,r,rp)
-	return ev>=1300 and ep==tp
-end
 function cod.acttg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0 and e:IsHasType(EFFECT_TYPE_ACTIVATE) 
 		and Duel.IsPlayerCanSpecialSummonMonster(tp,id,0xd3d,0x1021,1300,0,3,RACE_ZOMBIE,ATTRIBUTE_DARK) end

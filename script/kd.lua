@@ -243,7 +243,7 @@ end
 --[[ Blood Omen Functions ]]--
 
 --Add monster attributes to spell/trap cards at all times
-function Qued.addBOAttributes(c,id,spell)
+function Qued.AddAttributes(c,spell)
 	local card=c:GetMetatable(c)
 	local atts={cset=0xd3d,ctpe=0x21,catk=1300,cdef=0,clvl=3,crac=RACE_ZOMBIE,catt=ATTRIBUTE_DARK}
 	if card.atts then
@@ -328,6 +328,7 @@ function Qued.AddPendyProcedure(c,reg,desc)
 	e1:SetCode(EFFECT_SPSUMMON_PROC_G)
 	e1:SetProperty(EFFECT_FLAG_UNCOPYABLE+EFFECT_FLAG_CANNOT_DISABLE)
 	e1:SetRange(LOCATION_PZONE)
+	e1:SetCost(Qued.PendyCost)
 	e1:SetCondition(Qued.PendyCondition())
 	e1:SetOperation(Qued.PendyOperation())
 	e1:SetValue(SUMMON_TYPE_PENDULUM)
@@ -341,6 +342,22 @@ function Qued.AddPendyProcedure(c,reg,desc)
 	-- 	e2:SetRange(LOCATION_HAND)
 	-- 	c:RegisterEffect(e2)
 	-- end
+end
+function Qued.PendyCost(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return true end
+	local id=e:GetHandler():GetCode()
+	local e1=Effect.CreateEffect(e:GetHandler())
+	e1:SetType(EFFECT_TYPE_FIELD)
+	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET+EFFECT_FLAG_CLIENT_HINT)
+	e1:SetDescription(aux.Stringid(id,0))
+	e1:SetCode(EFFECT_CANNOT_SPECIAL_SUMMON)
+	e1:SetReset(RESET_PHASE+PHASE_END)
+	e1:SetTargetRange(1,0)
+	e1:SetTarget(Qued.sumlimit)
+	Duel.RegisterEffect(e1,tp)
+end
+function Qued.sumlimit(e,c,sump,sumtype,sumpos,targetp,se)
+	return not c:IsSetCard(0xd3d)
 end
 function Qued.PendyFilter(c,e,tp,lscale,rscale,lvchk)
 	if lscale>rscale then lscale,rscale=rscale,lscale end

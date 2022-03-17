@@ -3,7 +3,7 @@ local cod,id=GetID()
 Duel.LoadScript("kd.lua")
 function cod.initial_effect(c)
 	--attributes
-	Qued.addBOAttributes(c,id,true)
+	Qued.AddAttributes(c,true)
 	--Activate
 	local e1=Effect.CreateEffect(c)
 	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
