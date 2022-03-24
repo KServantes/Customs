@@ -39,10 +39,7 @@ function cod.initial_effect(c)
 	end)
 end
 
-function cod.mfilter(c)
-	return c:IsType(TYPE_MONSTER) and not c:IsSetCard(0xd3d)
-end
-
+--helper function
 local function checkFilter(ct)
 	local flag=false
 	for i=1,ct do
@@ -60,6 +57,7 @@ local function checkFilter(ct)
 		return true
 	end
 end
+--register chain cards and count
 function cod.chreg(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
 	if not cod.chain[c] then
@@ -75,7 +73,6 @@ function cod.chreg(e,tp,eg,ep,ev,re,r,rp)
 		Duel.RaiseEvent(Group.FromCards(c),EVENT_CUSTOM+id,re,r,rp,ep,ev)
 	end
 end
-
 function cod.resetop(e,tp,eg,ep,ev,re,r,rp)
 	cod.chain[e:GetHandler()]=nil
 	cod.chainct=0
