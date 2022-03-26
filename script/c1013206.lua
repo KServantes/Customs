@@ -33,7 +33,6 @@ function cod.initial_effect(c)
 		Duel.RegisterEffect(ge1,0)
 		local ge2=ge1:Clone()
 		ge2:SetCode(EVENT_CHAIN_END)
-		ge2:SetCountLimit(1)
 		ge2:SetOperation(cod.resetop)
 		Duel.RegisterEffect(ge2,0)
 	end)
@@ -47,15 +46,10 @@ local function checkFilter(ct)
 		local cheff=Duel.GetChainInfo(i,CHAININFO_TRIGGERING_EFFECT)
 		local rc=cheff:GetHandler()
 		if rc and rc:IsType(TYPE_MONSTER) and Duel.IsChainNegatable(i) and not rc:IsSetCard(0xd3d) then
-			rc:RegisterFlagEffect(id,RESET_PHASE+PHASE_END,0,0,i)
 			flag=true
 		end
 	end
-	if flag==false then
-		return false
-	else
-		return true
-	end
+	return flag
 end
 --register chain cards and count
 function cod.chreg(e,tp,eg,ep,ev,re,r,rp)
@@ -91,20 +85,39 @@ function cod.negop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
 	local ct=cod.chainct
 	local cg=Group.CreateGroup()
+	local opt={}
+	local op=nil
 	for i=1,ct do
 		local cheff=Duel.GetChainInfo(i,CHAININFO_TRIGGERING_EFFECT)
 		local rc=cheff:GetHandler()
 		if rc and rc:IsType(TYPE_MONSTER) and not rc:IsSetCard(0xd3d) then
+			if not opt[rc] then
+				opt[rc]={i,cheff}
+			elseif opt[rc] then
+				table.insert(opt[rc],i)
+				table.insert(opt[rc],cheff)
+			end
 			cg:AddCard(rc)
 		end
 	end
-	if #cg>0 then 
-		Duel.Hint(HINTMSG_SELECT,tp,HINTMSG_SPSUMMON)
-		local ng=cg:Select(tp,1,1,nil)
-		local nc=ng:GetFirst()
-		local chno=nc:GetFlagEffectLabel(id)
-		Duel.NegateEffect(chno)
+	if #cg<=0 then return end
+	Duel.Hint(HINTMSG_SELECT,tp,HINTMSG_SPSUMMON)
+	local ng=cg:Select(tp,1,1,nil)
+	local nc=ng:GetFirst()
+	if #opt[nc]>2 then
+		local str={}
+		for i=2,#opt[nc] do
+			if i % 2 == 0 then
+				table.insert(str,opt[nc][i]:GetDescription())
+			end
+		end
+		op=Duel.SelectOption(tp,table.unpack(str))
+		op=opt[nc][(op+1)+op]
+	else
+		op=opt[nc][1]
 	end
+	if not op then return end
+	Duel.NegateEffect(op)
 end
 
 --activate
