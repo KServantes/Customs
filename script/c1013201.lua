@@ -36,7 +36,9 @@ end
 
 --special by effect damage
 function cod.damtg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0 
+	if chk==0 then return not e:GetHandler():IsStatus(STATUS_CHAINING)
+		and Duel.GetFlagEffect(tp,id)==0
+		and Duel.GetLocationCount(tp,LOCATION_MZONE)>0 
 		and e:GetHandler():IsCanBeSpecialSummoned(e,0,tp,false,false) end
 	local rec=Duel.GetChainInfo(ev,CHAININFO_TARGET_PARAM)
 	e:SetLabel(rec)
@@ -61,6 +63,7 @@ function cod.damope(e,tp,eg,ep,ev,re,r,rp)
 		e2:SetValue(e:GetLabel())
 		c:RegisterEffect(e2)
 	end
+	Duel.RegisterFlagEffect(tp,id,RESET_PHASE+PHASE_END,0,1)
 end
 --special by battle damage
 function cod.damopb(e,tp,eg,ep,ev,re,r,rp)
