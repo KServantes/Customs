@@ -101,10 +101,10 @@ end
 --special summon proc
 function cod.spcon(e,c)
 	if c==nil then return true end
-	return Duel.CheckReleaseGroup(c:GetControler(),Card.IsRace,2,false,2,true,c,c:GetControler(),nil,false,nil,RACE_ZOMBIE)
+	return Duel.CheckReleaseGroup(c:GetControler(),Card.IsRace,2,false,2,true,c,c:GetControler(),nil,true,nil,RACE_ZOMBIE)
 end
 function cod.sptg(e,tp,eg,ep,ev,re,r,rp,c)
-	local g=Duel.SelectReleaseGroup(tp,Card.IsRace,2,2,false,true,true,c,nil,nil,false,nil,RACE_ZOMBIE)
+	local g=Duel.SelectReleaseGroup(tp,Card.IsRace,2,2,false,true,true,c,nil,nil,true,nil,RACE_ZOMBIE)
 	if g then
 		g:KeepAlive()
 		e:SetLabelObject(g)
