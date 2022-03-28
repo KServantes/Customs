@@ -12,6 +12,7 @@ function cod.initial_effect(c)
 	e1:SetType(EFFECT_TYPE_ACTIVATE)
 	e1:SetProperty(EFFECT_FLAG_DELAY)
 	e1:SetCode(EVENT_SPSUMMON_SUCCESS)
+	e1:SetCountLimit(1,{id,1})
 	e1:SetTarget(cod.acttg)
 	e1:SetOperation(cod.actop)
 	c:RegisterEffect(e1)
@@ -24,14 +25,12 @@ function cod.initial_effect(c)
 	--
 	local e3=Effect.CreateEffect(c)
 	e3:SetDescription(aux.Stringid(id,1))
-	e3:SetCategory(CATEGORY_TODECK)
-	e3:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
-	e3:SetCode(EVENT_BE_MATERIAL)
-	e3:SetProperty(EFFECT_FLAG_DELAY)
-	-- e3:SetCountLimit(1,{id,1})
-	e3:SetCondition(cod.tdcon)
-	e3:SetTarget(cod.tdtg)
-	e3:SetOperation(cod.tdop)
+	e3:SetType(EFFECT_TYPE_QUICK_O)
+	e3:SetCode(EVENT_FREE_CHAIN)
+	e3:SetRange(LOCATION_MZONE)
+	e3:SetCountLimit(1,{id,2})
+	e3:SetTarget(cod.acttg)
+	e3:SetOperation(cod.actop)
 	c:RegisterEffect(e3)
 	Duel.AddCustomActivityCounter(id,ACTIVITY_CHAIN,cod.chainfilter)
 end
@@ -63,26 +62,31 @@ function cod.actop(e,tp,eg,ep,ev,re,r,rp)
 	Duel.SpecialSummonComplete()
 end
 
---to deck
-function cod.tdcon(e,tp,eg,ep,ev,re,r,rp)
+--activate spell card
+function cod.actfilter(c)
+	return c:IsSetCard(0xd3d) and c:IsType(TYPE_SPELL+TYPE_TRAP) and c:GetActivateEffect():IsActivatable(tp,true,false)
+end
+function cod.acttg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_SZONE)>0 
+		and Duel.IsExistingMatchingCard(cod.actfilter,tp,LOCATION_DECK+LOCATION_HAND,0,1,nil,e,tp) 
+end
+function cod.actop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
-	return c:IsLocation(LOCATION_GRAVE) and r==REASON_SYNCHRO
-end
-function cod.tdfilter(c)
-	return c:IsSetCard(0xd3d) and c:IsAbleToDeck()
-end
-function cod.tdtg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return e:GetHandler():IsAbleToDeck()
-		and Duel.IsExistingMatchingCard(cod.tdfilter,tp,LOCATION_GRAVE,0,1,e:GetHandler()) end
-	Duel.SetOperationInfo(0,CATEGORY_TODECK,nil,2,0,LOCATION_GRAVE)
-end
-function cod.tdop(e,tp,eg,ep,ev,re,r,rp)
-	local c=e:GetHandler()
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TODECK)
-	local g=Duel.SelectTarget(tp,cod.tdfilter,tp,LOCATION_GRAVE,0,1,1,nil)
-	local tc=g:GetFirst()
-	if tc and tc:IsRelateToEffect(e) then
-		local sg=Group.FromCards(tc,c)
-		Duel.SendtoDeck(sg,nil,2,REASON_EFFECT)
-	end
+	if Duel.GetLocationCount(tp,LOCATION_SZONE)<=0 then return end
+	local g=Duel.GetMatchingGroup(cod.actfilter,tp,LOCATION_DECK,0,nil,e,tp)
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOFIELD)
+	local sc=g:Select(tp,1,1,nil):GetFirst()
+	Duel.MoveToField(sc,tp,tp,LOCATION_SZONE,POS_FACEUP,true)
+	local se=sc:GetActivateEffect()
+	local tg=se:GetTarget()
+	local op=se:GetOperation()
+	e:SetCategory(se:GetCategory())
+	sc:CreateEffectRelation(se)
+	if tg then tg(se,tp,eg,ep,ev,re,r,rp,1) end
+	Duel.RaiseEvent(Group.FromCards(sc),EVENT_CHAINING,se,r,rp,ep,ev)
+	sc:CancelToGrave(false)
+	Duel.BreakEffect()
+	sc:SetStatus(STATUS_ACTIVATED,true)
+	if op and not sc:IsDisabled() then op(se,tp,eg,ep,ev,re,r,rp,1) end
+	sc:ReleaseEffectRelation(se)
 end
