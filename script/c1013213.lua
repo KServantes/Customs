@@ -5,6 +5,8 @@ Duel.LoadScript("kd.lua")
 function cod.initial_effect(c)
 	--attributes
 	Qued.AddAttributes(c,false)
+	--spell counter
+	Qued.AddSpellCounter(c,id)
 	--special summon
 	local e1=Effect.CreateEffect(c)
 	e1:SetDescription(aux.Stringid(id,0))
@@ -29,15 +31,11 @@ function cod.initial_effect(c)
 	e3:SetCode(EVENT_FREE_CHAIN)
 	e3:SetRange(LOCATION_MZONE)
 	e3:SetCountLimit(1,{id,2})
-	e3:SetTarget(cod.acttg)
-	e3:SetOperation(cod.actop)
+	e3:SetTarget(cod.actsptg)
+	e3:SetOperation(cod.actspop)
 	c:RegisterEffect(e3)
-	Duel.AddCustomActivityCounter(id,ACTIVITY_CHAIN,cod.chainfilter)
 end
---
-function cod.chainfilter(re)
-	return not (re:IsActiveType(TYPE_SPELL) and re:GetHandler():IsSetCard(0xd3d))
-end
+
 function cod.handcon(e)
 	local tp=e:GetHandlerPlayer()
 	return Duel.GetCustomActivityCount(id,tp,ACTIVITY_CHAIN)>0
@@ -63,14 +61,17 @@ function cod.actop(e,tp,eg,ep,ev,re,r,rp)
 end
 
 --activate spell card
-function cod.actfilter(c)
-	return c:IsSetCard(0xd3d) and c:IsType(TYPE_SPELL+TYPE_TRAP) and c:GetActivateEffect():IsActivatable(tp,true,false)
+function cod.actfilter(c,e,tp)
+	local type_spell=TYPE_SPELL+TYPE_QUICKPLAY
+	local type_trap=TYPE_TRAP+TYPE_COUNTER
+	if not c:IsType(type_spell|type_trap) then return end
+	return c:IsSetCard(0xd3d) and c:GetActivateEffect():IsActivatable(tp,true,true)
 end
-function cod.acttg(e,tp,eg,ep,ev,re,r,rp,chk)
+function cod.actsptg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_SZONE)>0 
-		and Duel.IsExistingMatchingCard(cod.actfilter,tp,LOCATION_DECK+LOCATION_HAND,0,1,nil,e,tp) 
+		and Duel.IsExistingMatchingCard(cod.actfilter,tp,LOCATION_DECK+LOCATION_HAND,0,1,nil,e,tp) end
 end
-function cod.actop(e,tp,eg,ep,ev,re,r,rp)
+function cod.actspop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
 	if Duel.GetLocationCount(tp,LOCATION_SZONE)<=0 then return end
 	local g=Duel.GetMatchingGroup(cod.actfilter,tp,LOCATION_DECK,0,nil,e,tp)

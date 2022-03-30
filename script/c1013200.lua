@@ -24,6 +24,11 @@ function cod.initial_effect(c)
 	e2:SetTarget(cod.eqtg)
 	e2:SetOperation(cod.eqop)
 	c:RegisterEffect(e2)
+	local e3=e2:Clone()
+	e3:SetType(EFFECT_TYPE_QUICK_O)
+	e3:SetCode(EVENT_FREE_CHAIN)
+	e3:SetCondition(cod.eqcon2)
+	c:RegisterEffect(e3)
 end
 
 --special summon
@@ -48,7 +53,11 @@ end
 --equip
 function cod.eqcon(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
-	return c:GetFlagEffect(id)>0
+	return c:GetFlagEffect(id)>0 and not c:IsHasEffect(CARD_CHARITY)
+end
+function cod.eqcon2(e,tp,eg,ep,ev,re,r,rp)
+	local c=e:GetHandler()
+	return c:IsHasEffect(CARD_CHARITY) and c:GetFlagEffect(id)>0
 end
 function cod.eqfilter2(c)
 	return c:IsFaceup() and c:IsSetCard(0xd3d) and c:IsType(TYPE_SYNCHRO)

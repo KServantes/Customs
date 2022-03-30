@@ -13,6 +13,9 @@ end
 --Common used cards
 CARD_PEND_FLAME_GHOST = 1013048
 CARD_AZEGAHL = 1013058
+CARD_ILILIA = 1013204
+CARD_CHARITY = 1013212
+-- CARD_LYRIA = 1013206
 
 --Resets
 RESETS_BLOOD_OMEN = RESET_TODECK|RESET_TOHAND|RESET_REMOVE
@@ -427,3 +430,51 @@ function Qued.PendyOperation()
         Duel.SpecialSummonComplete()
 	end
 end
+
+--The Common Spell Counter
+function Qued.AddSpellCounter(c,id)
+	Duel.AddCustomActivityCounter(id,ACTIVITY_CHAIN,Qued.spellfilter)
+end
+function Qued.spellfilter(re)
+	return not (re:IsActiveType(TYPE_SPELL) and re:GetHandler():IsSetCard(0xd3d))
+end
+
+--Custom Blood Omen Link Proc
+--sp_ct - number of spells required for summon
+function Qued.AddLinkProc(c,id,sp_ct)
+	--spell count
+	Qued.AddSpellCounter(c,id)
+	--unsummonable
+	local e1=Effect.CreateEffect(c)
+	e1:SetType(EFFECT_TYPE_SINGLE)
+	e1:SetCode(EFFECT_SPSUMMON_CONDITION)
+	e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
+	e1:SetValue(function () return not aux.lnklimit(e,se,sp,st) end)
+	c:RegisterEffect(e1)
+	--Special Summon
+	local e2=Effect.CreateEffect(c)
+	e2:SetType(EFFECT_TYPE_FIELD)
+	e2:SetCode(EFFECT_SPSUMMON_PROC)
+	e2:SetProperty(EFFECT_FLAG_UNCOPYABLE)
+	e2:SetRange(LOCATION_EXTRA)
+	e2:SetValue(1)
+	e2:SetCondition(Qued.LinkCon(id,sp_ct))
+	e2:SetOperation(Qued.LinkOp(sp_ct))
+	c:RegisterEffect(e2)
+end
+function Qued.LinkCon(id,sp_ct)
+	return function (e,c)
+		if c==nil then return true end
+		local tp=c:GetControler()
+		local spct=Duel.GetFlagEffectLabel(tp,CARD_ILILIA)
+		local acct=Duel.GetCustomActivityCount(id,tp,ACTIVITY_CHAIN)
+		return acct>=sp_ct and (not spct or acct-spct>=sp_ct) and Duel.GetLocationCountFromEx(tp)>0
+	end
+end
+function Qued.LinkOp(sp_ct)
+	return function (e,tp,eg,ep,ev,re,r,rp)
+		--flag label for acc count
+		Duel.RegisterFlagEffect(tp,CARD_ILILIA,RESET_PHASE+PHASE_END,0,0,sp_ct)
+	end
+end
+

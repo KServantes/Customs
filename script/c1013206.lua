@@ -122,7 +122,10 @@ end
 
 --activate
 function cod.actfilter(c,e,tp)
-	return c:IsSetCard(0xd3d) and c:IsType(TYPE_SPELL+TYPE_TRAP) and c:GetActivateEffect():IsActivatable(tp,true,false)
+	local type_spell=TYPE_SPELL+TYPE_QUICKPLAY
+	local type_trap=TYPE_TRAP+TYPE_COUNTER
+	if not c:IsType(type_spell|type_trap) then return end
+	return c:IsSetCard(0xd3d) and c:GetActivateEffect():IsActivatable(tp,true,false)
 end
 function cod.acttg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_SZONE)>0 
@@ -140,6 +143,7 @@ function cod.actop(e,tp,eg,ep,ev,re,r,rp)
 	e:SetCategory(se:GetCategory())
 	sc:CreateEffectRelation(se)
 	if tg then tg(se,tp,eg,ep,ev,re,r,rp,1) end
+	-- Duel.RegisterFlagEffect(tp,id,RESET_PHASE+PHASE_END,0,0)
 	Duel.RaiseEvent(Group.FromCards(sc),EVENT_CHAINING,se,r,rp,ep,ev)
 	sc:CancelToGrave(false)
 	Duel.BreakEffect()
