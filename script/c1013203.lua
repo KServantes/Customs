@@ -5,6 +5,7 @@ Duel.LoadScript("kd.lua")
 function cod.initial_effect(c)
 	--attributes
 	Qued.AddAttributes(c,false)
+	Qued.AddSpellCounter(c,id)
 	--Special Summon
 	local e1=Effect.CreateEffect(c)
 	e1:SetDescription(aux.Stringid(id,0))
@@ -47,7 +48,6 @@ function cod.initial_effect(c)
 		ge2:SetOperation(cod.resetop)
 		Duel.RegisterEffect(ge2,0)
 	end)
-	Duel.AddCustomActivityCounter(id,ACTIVITY_CHAIN,cod.chainfilter)
 end
 function cod.checkop(e,tp,eg,ep,ev,re,r,rp)
 	local rec=cod.val[0]
@@ -64,9 +64,6 @@ function cod.resetop(e,tp,eg,ep,ev,re,r,rp)
 	cod.val[0]=0
 end
 --
-function cod.chainfilter(re)
-	return not (re:IsActiveType(TYPE_SPELL) and re:GetHandler():IsSetCard(0xd3d))
-end
 function cod.handcon(e)
 	local tp=e:GetHandlerPlayer()
 	return Duel.GetCustomActivityCount(id,tp,ACTIVITY_CHAIN)>1

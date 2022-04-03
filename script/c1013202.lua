@@ -3,6 +3,7 @@ local cod,id=GetID()
 Duel.LoadScript('kd.lua')
 function cod.initial_effect(c)
 	c:EnableReviveLimit()
+	Qued.AddSpellCounter(c,id)
 	--Pendulum
 	Pendulum.AddProcedure(c)
 	--indes
@@ -52,16 +53,12 @@ function cod.initial_effect(c)
 	e6:SetCondition(cod.immcon)
 	e6:SetValue(cod.efilter)
 	c:RegisterEffect(e6)
-	Duel.AddCustomActivityCounter(id,ACTIVITY_CHAIN,cod.chainfilter)
 end
 
---chain ct
-function cod.chainfilter(re)
-	return not (re:IsActiveType(TYPE_SPELL) and re:GetHandler():IsSetCard(0xd3d))
-end
 --condition
 function cod.immcon(e)
-	return Duel.GetCustomActivityCount(id,e:GetHandlerPlayer(),ACTIVITY_CHAIN)>1
+	local tp=e:GetHandlerPlayer()
+	return Duel.GetCustomActivityCount(id,tp,ACTIVITY_CHAIN)>1
 end
 
 --indestructable this turn
