@@ -20,6 +20,9 @@ CARD_CHARITY = 1013212
 --Resets
 RESETS_BLOOD_OMEN = RESET_TODECK|RESET_TOHAND|RESET_REMOVE
 
+--a CONSTANT
+HINTMSG_CHAINNO=4005
+
 
 --[[ Rewrites and Custom Functions ]]---
 local card_can_special, card_can_be_fusion_mat, duel_special_summon = 
@@ -478,3 +481,67 @@ function Qued.LinkOp(sp_ct)
 	end
 end
 
+--Some Helper Functions for Blood Omen Lyria
+function Qued.CheckChain(ct)
+	local i,flag=0,false
+	while flag==false and i~=ct do
+		local cheff,chtp=Duel.GetChainInfo(i,CHAININFO_TRIGGERING_EFFECT,CHAININFO_TRIGGERING_CONTROLER)
+		local rc=cheff:GetHandler()
+		if rc and rc:IsType(TYPE_MONSTER) and Duel.IsChainNegatable(i) 
+			and (not rc:IsSetCard(0xd3d) or rc:IsControler(1-chtp)) then flag=true end
+		i=i+1
+	end
+	return flag
+end
+--returns chain table 'ch_t' with the chain link number before the chain's effect object
+--returns chain group the cards from the chain
+function Qued.chainfilter(c,tp)
+	return c:IsType(TYPE_MONSTER) and (not c:IsSetCard(0xd3d) or c:IsControler(1-tp))
+end
+function Qued.GetChainLinkInfo(ct)
+	local cg=Group.CreateGroup()
+	local ch_t={}
+	for i=1,ct do
+		local cheff,cp=Duel.GetChainInfo(i,CHAININFO_TRIGGERING_EFFECT,CHAININFO_TRIGGERING_CONTROLER)
+		local rc=cheff:GetHandler()
+		if rc and Qued.chainfilter(rc,cp) then
+			if not ch_t[rc] then
+				ch_t[rc]={i,cheff}
+			elseif ch_t[rc] then
+				table.insert(ch_t[rc],i)
+				table.insert(ch_t[rc],cheff)
+			end
+			cg:AddCard(rc)
+		end
+	end
+	if #cg<=0 then return nil, nil end
+	return ch_t,cg
+end
+strings_table={4000,4001,4002,4003,4004}
+--returns the chain link no. selected...hopefully with message
+function Qued.GetChainLinkid(ch_t,nc,tp)
+	local op=nil
+	local ChainTable=ch_t[nc]
+	if not ch_t or not ChainTable then
+		return op
+	end
+	if #ChainTable>2 then
+		local str={}
+		local i=2
+		while i>1 do
+			if ChainTable[i]:GetDescription()==0 then
+				table.insert(str,strings_table[(i>>2)])
+			else
+				table.insert(str,ChainTable[i]:GetDescription())
+			end
+			if not ChainTable[i+2] then i=1 else i=i+2 end
+		end
+		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_CHAINNO)
+		op=Duel.SelectOption(tp,table.unpack(str))
+		Duel.Hint(HINT_OPSELECTED,1-tp,strings_table[i+1])
+		op=ChainTable[(op+1)+op]
+	else
+		op=ChainTable[1]
+	end
+	return op
+end

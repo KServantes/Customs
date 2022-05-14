@@ -1,5 +1,6 @@
 --Blood Omen - Lyria
 local cod,id=GetID()
+Duel.LoadScript('kd.lua')
 function cod.initial_effect(c)
 	--negate
 	local e1=Effect.CreateEffect(c)
@@ -24,8 +25,7 @@ function cod.initial_effect(c)
 	e2:SetOperation(cod.actop)
 	c:RegisterEffect(e2)
 	aux.GlobalCheck(cod,function()
-		cod.chain={}
-		cod.chainct=0
+		cod.chain={ct=0}
 		local ge1=Effect.CreateEffect(c)
 		ge1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
 		ge1:SetCode(EVENT_CHAINING)
@@ -38,38 +38,25 @@ function cod.initial_effect(c)
 	end)
 end
 
---helper function
-local function checkFilter(ct)
-	local flag=false
-	for i=1,ct do
-		if flag==true then break end
-		local cheff=Duel.GetChainInfo(i,CHAININFO_TRIGGERING_EFFECT)
-		local rc=cheff:GetHandler()
-		if rc and rc:IsType(TYPE_MONSTER) and Duel.IsChainNegatable(i) and not rc:IsSetCard(0xd3d) then
-			flag=true
-		end
-	end
-	return flag
-end
 --register chain cards and count
 function cod.chreg(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
-	if not cod.chain[c] then
-		cod.chain[c]=Group.CreateGroup()
-		cod.chain[c]:KeepAlive()
+	local chain=cod.chain
+	if not chain[c] then
+		chain[c]=Group.CreateGroup()
+		chain[c]:KeepAlive()
 	end
-	local cg=cod.chain[c]
-	local ct=cod.chainct
+	local cg,ct=chain[c],chain.ct
 	cg:AddCard(re:GetHandler())
 	ct=ct+1
-	cod.chainct=ct
-	if cg:IsExists(Card.IsSetCard,1,nil,0xd3d) and checkFilter(ct) then
-		Duel.RaiseEvent(Group.FromCards(c),EVENT_CUSTOM+id,re,r,rp,ep,ev)
+	chain.ct=ct
+	if cg:IsExists(Card.IsSetCard,1,nil,0xd3d) and Qued.CheckChain(ct) then
+		Duel.RaiseEvent(Group.FromCards(c),EVENT_CUSTOM+id,e,0,tp,0,0)
 	end
 end
 function cod.resetop(e,tp,eg,ep,ev,re,r,rp)
 	cod.chain[e:GetHandler()]=nil
-	cod.chainct=0
+	cod.chain.ct=0
 end
 
 --negate
@@ -83,40 +70,11 @@ function cod.negtg(e,tp,eg,ep,ev,re,r,rp,chk)
 end
 function cod.negop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
-	local ct=cod.chainct
-	local cg=Group.CreateGroup()
-	local opt={}
-	local op=nil
-	for i=1,ct do
-		local cheff=Duel.GetChainInfo(i,CHAININFO_TRIGGERING_EFFECT)
-		local rc=cheff:GetHandler()
-		if rc and rc:IsType(TYPE_MONSTER) and not rc:IsSetCard(0xd3d) then
-			if not opt[rc] then
-				opt[rc]={i,cheff}
-			elseif opt[rc] then
-				table.insert(opt[rc],i)
-				table.insert(opt[rc],cheff)
-			end
-			cg:AddCard(rc)
-		end
-	end
-	if #cg<=0 then return end
+	local cht,cg=Qued.GetChainLinkInfo(cod.chain.ct)
 	Duel.Hint(HINTMSG_SELECT,tp,HINTMSG_SPSUMMON)
 	local ng=cg:Select(tp,1,1,nil)
 	local nc=ng:GetFirst()
-	if #opt[nc]>2 then
-		local str={}
-		for i=2,#opt[nc] do
-			if i % 2 == 0 then
-				table.insert(str,opt[nc][i]:GetDescription())
-			end
-		end
-		op=Duel.SelectOption(tp,table.unpack(str))
-		op=opt[nc][(op+1)+op]
-	else
-		op=opt[nc][1]
-	end
-	if not op then return end
+	local op=Qued.GetChainLinkid(cht,nc,tp)
 	Duel.NegateEffect(op)
 end
 
@@ -132,22 +90,28 @@ function cod.acttg(e,tp,eg,ep,ev,re,r,rp,chk)
 		and Duel.IsExistingMatchingCard(cod.actfilter,tp,LOCATION_DECK,0,1,nil,e,tp) end
 end
 function cod.actop(e,tp,eg,ep,ev,re,r,rp)
-	if Duel.GetLocationCount(tp,LOCATION_SZONE)<=0 then return end
-	local g=Duel.GetMatchingGroup(cod.actfilter,tp,LOCATION_DECK,0,nil,e,tp)
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOFIELD)
-	local sc=g:Select(tp,1,1,nil):GetFirst()
-	Duel.MoveToField(sc,tp,tp,LOCATION_SZONE,POS_FACEUP,true)
-	local se=sc:GetActivateEffect()
-	local tg=se:GetTarget()
-	local op=se:GetOperation()
-	e:SetCategory(se:GetCategory())
-	sc:CreateEffectRelation(se)
-	if tg then tg(se,tp,eg,ep,ev,re,r,rp,1) end
-	-- Duel.RegisterFlagEffect(tp,id,RESET_PHASE+PHASE_END,0,0)
-	Duel.RaiseEvent(Group.FromCards(sc),EVENT_CHAINING,se,r,rp,ep,ev)
-	sc:CancelToGrave(false)
-	Duel.BreakEffect()
-	sc:SetStatus(STATUS_ACTIVATED,true)
-	if op and not sc:IsDisabled() then op(se,tp,eg,ep,ev,re,r,rp,1) end
-	sc:ReleaseEffectRelation(se)
+    if Duel.GetLocationCount(tp,LOCATION_SZONE)<=0 then return end
+    local g=Duel.GetMatchingGroup(cod.actfilter,tp,LOCATION_DECK,0,nil,e,tp)
+    Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOFIELD)
+    local sc=g:Select(tp,1,1,nil):GetFirst()
+    if not sc then return end
+    --activate
+    local e1=Effect.CreateEffect(e:GetHandler())
+    e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+    e1:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE)
+    e1:SetCode(EVENT_CHAIN_END)
+    e1:SetCountLimit(1)
+    e1:SetLabelObject(sc)
+    e1:SetOperation(cod.faop)
+    Duel.RegisterEffect(e1,tp)
+end
+function cod.faop(e,tp,eg,ep,ev,re,r,rp)
+    local tc=e:GetLabelObject()
+    if not tc then return end
+    local te=tc:GetActivateEffect()
+    local tep=tc:GetControler()
+    if te and te:GetCode()==EVENT_FREE_CHAIN and te:IsActivatable(tep) then
+        Duel.Activate(te)
+    end
+    e:Reset()
 end
