@@ -20,8 +20,13 @@ CARD_CHARITY = 1013212
 --Resets
 RESETS_BLOOD_OMEN = RESET_TODECK|RESET_TOHAND|RESET_REMOVE
 
---a CONSTANT
+--CONSTANTS
 HINTMSG_CHAINNO=4005
+
+TYPE_BLOOD_SPELL=TYPE_QUICKPLAY+TYPE_SPELL
+TYPE_BLOOD_TRAP=TYPE_COUNTER+TYPE_TRAP
+TYPE_EFFECT_MON=TYPE_EFFECT+TYPE_MONSTER
+TYPE_TUNER_MON=TYPE_EFFECT_MON+TYPE_TUNER
 
 
 --[[ Rewrites and Custom Functions ]]---
@@ -247,10 +252,9 @@ end
 
 
 --[[ Blood Omen Functions ]]--
-
 --Add monster attributes to spell/trap cards at all times
 function Qued.AddAttributes(c,spell)
-	local card=c:GetMetatable(c)
+	local card=c:GetMetatable()
 	local atts={cset=0xd3d,ctpe=0x21,catk=1300,cdef=0,clvl=3,crac=RACE_ZOMBIE,catt=ATTRIBUTE_DARK}
 	if card.atts then
 		for att,_ in pairs(atts) do
@@ -275,9 +279,9 @@ function Qued.AddAttributes(c,spell)
 	local me2=me1:Clone()
 	me2:SetCode(EFFECT_REMOVE_TYPE)
 	if spell then
-		me2:SetValue(TYPE_QUICKPLAY+TYPE_SPELL)
+		me2:SetValue(TYPE_BLOOD_SPELL)
 	else
-		me2:SetValue(TYPE_COUNTER+TYPE_TRAP)
+		me2:SetValue(TYPE_BLOOD_TRAP)
 	end
 	c:RegisterEffect(me2)
 	local me3=me1:Clone()
@@ -482,34 +486,34 @@ function Qued.LinkOp(sp_ct)
 end
 
 --Some Helper Functions for Blood Omen Lyria
-function Qued.CheckChain(ct)
+function Qued.CheckChain(ct,tp)
 	local i,flag=0,false
 	while flag==false and i~=ct do
-		local cheff,chtp=Duel.GetChainInfo(i,CHAININFO_TRIGGERING_EFFECT,CHAININFO_TRIGGERING_CONTROLER)
-		local rc=cheff:GetHandler()
+		local ce,cp=Duel.GetChainInfo(i,CHAININFO_TRIGGERING_EFFECT,CHAININFO_TRIGGERING_PLAYER)
+		local rc=ce:GetHandler()
 		if rc and rc:IsType(TYPE_MONSTER) and Duel.IsChainNegatable(i) 
-			and (not rc:IsSetCard(0xd3d) or rc:IsControler(1-chtp)) then flag=true end
+			and (not rc:IsSetCard(0xd3d) or cp~=tp) then flag=true end
 		i=i+1
 	end
 	return flag
 end
 --returns chain table 'ch_t' with the chain link number before the chain's effect object
 --returns chain group the cards from the chain
-function Qued.chainfilter(c,tp)
-	return c:IsType(TYPE_MONSTER) and (not c:IsSetCard(0xd3d) or c:IsControler(1-tp))
+function Qued.chainfilter(c,cp,tp)
+	return c:IsType(TYPE_MONSTER) and (not c:IsSetCard(0xd3d) or cp~=tp)
 end
-function Qued.GetChainLinkInfo(ct)
+function Qued.GetChainLinkInfo(ct,tp)
 	local cg=Group.CreateGroup()
 	local ch_t={}
 	for i=1,ct do
-		local cheff,cp=Duel.GetChainInfo(i,CHAININFO_TRIGGERING_EFFECT,CHAININFO_TRIGGERING_CONTROLER)
-		local rc=cheff:GetHandler()
-		if rc and Qued.chainfilter(rc,cp) then
+		local ce,cp=Duel.GetChainInfo(i,CHAININFO_TRIGGERING_EFFECT,CHAININFO_TRIGGERING_PLAYER)
+		local rc=ce:GetHandler()
+		if rc and Qued.chainfilter(rc,cp,tp) then
 			if not ch_t[rc] then
-				ch_t[rc]={i,cheff}
+				ch_t[rc]={i,ce}
 			elseif ch_t[rc] then
 				table.insert(ch_t[rc],i)
-				table.insert(ch_t[rc],cheff)
+				table.insert(ch_t[rc],ce)
 			end
 			cg:AddCard(rc)
 		end
@@ -530,7 +534,7 @@ function Qued.GetChainLinkid(ch_t,nc,tp)
 		local i=2
 		while i>1 do
 			if ChainTable[i]:GetDescription()==0 then
-				table.insert(str,strings_table[(i>>2)])
+				table.insert(str,strings_table[(i>>1)])
 			else
 				table.insert(str,ChainTable[i]:GetDescription())
 			end
@@ -538,7 +542,7 @@ function Qued.GetChainLinkid(ch_t,nc,tp)
 		end
 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_CHAINNO)
 		op=Duel.SelectOption(tp,table.unpack(str))
-		Duel.Hint(HINT_OPSELECTED,1-tp,strings_table[i+1])
+		Duel.Hint(HINT_OPSELECTED,1-tp,strings_table[op+1])
 		op=ChainTable[(op+1)+op]
 	else
 		op=ChainTable[1]

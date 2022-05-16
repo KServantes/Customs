@@ -29,7 +29,7 @@ function cod.initial_effect(c)
 	e3:SetDescription(aux.Stringid(id,1))
 	e3:SetType(EFFECT_TYPE_QUICK_O)
 	e3:SetCode(EVENT_FREE_CHAIN)
-	e3:SetRange(LOCATION_MZONE)
+	e3:SetRange(LOCATION_MZONE+LOCATION_GRAVE)
 	e3:SetCountLimit(1,{id,2})
 	e3:SetTarget(cod.actsptg)
 	e3:SetOperation(cod.actspop)
@@ -77,17 +77,24 @@ function cod.actspop(e,tp,eg,ep,ev,re,r,rp)
 	local g=Duel.GetMatchingGroup(cod.actfilter,tp,LOCATION_DECK,0,nil,e,tp)
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOFIELD)
 	local sc=g:Select(tp,1,1,nil):GetFirst()
-	Duel.MoveToField(sc,tp,tp,LOCATION_SZONE,POS_FACEUP,true)
-	local se=sc:GetActivateEffect()
-	local tg=se:GetTarget()
-	local op=se:GetOperation()
-	e:SetCategory(se:GetCategory())
-	sc:CreateEffectRelation(se)
-	if tg then tg(se,tp,eg,ep,ev,re,r,rp,1) end
-	Duel.RaiseEvent(Group.FromCards(sc),EVENT_CHAINING,se,r,rp,ep,ev)
-	sc:CancelToGrave(false)
-	Duel.BreakEffect()
-	sc:SetStatus(STATUS_ACTIVATED,true)
-	if op and not sc:IsDisabled() then op(se,tp,eg,ep,ev,re,r,rp,1) end
-	sc:ReleaseEffectRelation(se)
+    if not sc then return end
+    --activate
+    local e1=Effect.CreateEffect(c)
+    e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+    e1:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE)
+    e1:SetCode(EVENT_CHAIN_END)
+    e1:SetCountLimit(1)
+    e1:SetLabelObject(sc)
+    e1:SetOperation(cod.faop)
+    Duel.RegisterEffect(e1,tp)
+end
+function cod.faop(e,tp,eg,ep,ev,re,r,rp)
+    local tc=e:GetLabelObject()
+    if not tc then return end
+    local te=tc:GetActivateEffect()
+    local tep=tc:GetControler()
+    if te and te:GetCode()==EVENT_FREE_CHAIN and te:IsActivatable(tep) then
+        Duel.Activate(te)
+    end
+    e:Reset()
 end

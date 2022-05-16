@@ -50,7 +50,7 @@ function cod.chreg(e,tp,eg,ep,ev,re,r,rp)
 	cg:AddCard(re:GetHandler())
 	ct=ct+1
 	chain.ct=ct
-	if cg:IsExists(Card.IsSetCard,1,nil,0xd3d) and Qued.CheckChain(ct) then
+	if cg:IsExists(Card.IsSetCard,1,nil,0xd3d) and Qued.CheckChain(ct,tp) then
 		Duel.RaiseEvent(Group.FromCards(c),EVENT_CUSTOM+id,e,0,tp,0,0)
 	end
 end
@@ -70,7 +70,7 @@ function cod.negtg(e,tp,eg,ep,ev,re,r,rp,chk)
 end
 function cod.negop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
-	local cht,cg=Qued.GetChainLinkInfo(cod.chain.ct)
+	local cht,cg=Qued.GetChainLinkInfo(cod.chain.ct,tp)
 	Duel.Hint(HINTMSG_SELECT,tp,HINTMSG_SPSUMMON)
 	local ng=cg:Select(tp,1,1,nil)
 	local nc=ng:GetFirst()
