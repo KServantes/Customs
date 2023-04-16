@@ -264,8 +264,7 @@ function Qued.AddAttributes(c,spell)
 		end
 	end
 	if not card.flag then
-		card.flag={}
-		card.flag[0]=0
+		card.flag=0
 	end
 	--become monster
 	local me1=Effect.CreateEffect(c)
@@ -273,7 +272,7 @@ function Qued.AddAttributes(c,spell)
 	me1:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
 	me1:SetCode(EFFECT_ADD_TYPE)
 	me1:SetRange(LOCATION_GRAVE)
-	me1:SetCondition(function (e) return card.flag[0]==1 end)
+	me1:SetCondition(function (e) return card.flag==1 end)
 	me1:SetValue(atts.ctpe)
 	c:RegisterEffect(me1)
 	local me2=me1:Clone()
@@ -319,10 +318,45 @@ function Qued.resetflag(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
 	local card=c:GetMetatable(c)
 	if c:GetPreviousLocation()==LOCATION_GRAVE and not c:GetDestination()==LOCATION_MZONE then
-		card.flag[0]=0
+		card.flag=0
 	end
 	if c:GetPreviousLocation()==LOCATION_MZONE and not c:GetDestination()==LOCATION_GRAVE then
-		card.flag[0]=0
+		card.flag=0
+	end
+end
+
+--default spell/trap card activations
+--special summon
+function Qued.BloodOmenSpellActivate(c)
+	local id,card=c:GetCode(),c:GetMetatable()
+	local e1=Effect.CreateEffect(c)
+	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
+	e1:SetType(EFFECT_TYPE_ACTIVATE)
+	e1:SetCode(EVENT_FREE_CHAIN)
+	e1:SetTarget(Qued.STarget(id,card))
+	e1:SetOperation(Qued.SActivate(id))
+	c:RegisterEffect(e1)
+end
+
+function Qued.STarget(id,card)
+	return function(e,tp,eg,ep,ev,re,r,rp,chk)
+		if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0 and e:IsHasType(EFFECT_TYPE_ACTIVATE) 
+			and Duel.IsPlayerCanSpecialSummonMonster(tp,id,0xd3d,0x21,1300,0,3,RACE_ZOMBIE,ATTRIBUTE_DARK) end
+		Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,e:GetHandler(),1,0,0)
+		e:GetHandler():RegisterFlagEffect(id,RESET_EVENT+RESETS_BLOOD_OMEN,0,0)
+		card.flag=1
+	end
+end
+function Qued.SActivate(id)
+	return function(e,tp,eg,ep,ev,re,r,rp)
+		if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
+		local c=e:GetHandler()
+		if c:IsRelateToEffect(e) and Duel.IsPlayerCanSpecialSummonMonster(tp,id,0xd3d,0x21,1300,0,3,RACE_ZOMBIE,ATTRIBUTE_DARK) then
+			c:AddMonsterAttribute(TYPE_EFFECT)
+			Duel.SpecialSummonStep(c,0,tp,tp,true,false,POS_FACEUP)
+			c:AddMonsterAttributeComplete()
+		end
+		Duel.SpecialSummonComplete()
 	end
 end
 
