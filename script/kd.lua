@@ -221,12 +221,13 @@ function Qued.Azegahl(e,tp,eg,ep,ev,re,r,rp)
 	end
 	if c:GetFlagEffect(CARD_AZEGAHL)==0 then
 		local le=Effect.CreateEffect(c)
+		le:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
 		le:SetType(EFFECT_TYPE_CONTINUOUS+EFFECT_TYPE_SINGLE)
 		le:SetCode(EVENT_LEAVE_FIELD)
 		le:SetOperation(Qued.resetop)
-		le:SetReset(RESET_EVENT+RESETS_STANDARD_EXC_GRAVE)
+		-- le:SetReset(RESET_EVENT+RESETS_STANDARD_EXC_GRAVE)
 		c:RegisterEffect(le,true)
-		c:RegisterFlagEffect(CARD_AZEGAHL,RESET_EVENT+RESETS_STANDARD,0,1)
+		c:RegisterFlagEffect(CARD_AZEGAHL,RESET_EVENT+RESET_TOFIELD|RESET_LEAVE,0,1)
 	end
 end
 function Qued.resfilter(c)

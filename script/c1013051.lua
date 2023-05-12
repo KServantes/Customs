@@ -72,6 +72,7 @@ function cod.indop(e,tp,eg,ep,ev,re,r,rp)
 		e1:SetRange(LOCATION_MZONE)
 		e1:SetCondition(cod.econ)
 		e1:SetValue(cod.efilter)
+		e1:SetLabel(tp)
 		e1:SetReset(RESET_EVENT+RESETS_STANDARD+RESET_PHASE+PHASE_END)
 		tc:RegisterEffect(e1)
 	end
@@ -81,5 +82,5 @@ function cod.econ(e)
 	return not e:GetHandler():IsStatus(STATUS_BATTLE_DESTROYED)
 end
 function cod.efilter(e,te)
-	return te:GetOwner()~=e:GetOwner()
+	return te:GetOwnerPlayer()~=e:GetHandlerPlayer()
 end

@@ -69,14 +69,15 @@ end
 function c1013056.condition(e,tp,eg,ep,ev,re,r,rp)
 	local lv=0
 	local g=Duel.GetMatchingGroup(Card.IsRace,tp,LOCATION_GRAVE,0,nil,RACE_ZOMBIE)
-	local tc=g:GetFirst()
-	while tc do
-		if tc:GetLevel()>0 and not tc:IsLocation(LOCATION_SZONE) then
-			local tlv=tc:GetLevel()
-			if tlv>0 then lv=lv+tlv end
-		end
-		tc=g:GetNext()
-	end
+	g:ForEach(function(tc) lv=lv+tc:GetLevel() end)
+	-- local tc=g:GetFirst()
+	-- while tc do
+	-- 	if tc:GetLevel()>0 and not tc:IsLocation(LOCATION_SZONE) then
+	-- 		local tlv=tc:GetLevel()
+	-- 		if tlv>0 then lv=lv+tlv end
+	-- 	end
+	-- 	tc=g:GetNext()
+	-- end
 	if lv>12 then lv=12 end
 	if lv>0 then e:SetLabel(lv) end
 	return lv>0 and Duel.IsExistingMatchingCard(Card.IsRace,tp,LOCATION_GRAVE,0,1,nil,RACE_ZOMBIE)
@@ -90,6 +91,8 @@ function c1013056.target(e,tp,eg,ep,ev,re,r,rp,chk)
 end
 function c1013056.operation(e,tp,eg,ep,ev,re,r,rp)
 	if not e:GetHandler():IsRelateToEffect(e) then return end
+	local zg=Duel.GetMatchingGroup(Card.IsRace,tp,LOCATION_GRAVE,0,nil,RACE_ZOMBIE)
+	if #zg<=0 then return end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
 	local g=Duel.SelectMatchingCard(tp,c1013056.gfilter,tp,LOCATION_DECK+LOCATION_GRAVE,0,1,1,nil,e:GetLabel())
 	if g:GetCount()>0 then

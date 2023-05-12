@@ -53,18 +53,18 @@ function c1013033.thop(e,tp,eg,ep,ev,re,r,rp)
 		Duel.ConfirmCards(1-tp,g)
 	end
 end
-function c1013033.desfilter(c)
-	return c:IsFaceup() and c:IsDestructable()
-end
+-- function c1013033.desfilter(c)
+-- 	return c:IsFaceup() and c:IsDestructable()
+-- end
 function c1013033.destg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
-	if chkc then return chkc:IsLocation(LOCATION_MZONE) and chkc:IsControler(1-tp) and c1013033.desfilter(chkc) end
-	if chk==0 then return Duel.IsExistingTarget(c1013033.desfilter,tp,0,LOCATION_MZONE,1,nil)
-		and Duel.IsExistingTarget(c1013033.desfilter,tp,LOCATION_SZONE,0,1,nil) end
+	if chkc then return chkc:IsLocation(LOCATION_MZONE) and chkc:IsControler(1-tp) and chkc:IsDestructable() end
+	if chk==0 then return Duel.IsExistingTarget(Card.IsDestructable,tp,0,LOCATION_MZONE,1,nil)
+		and Duel.IsExistingTarget(Card.IsDestructable,tp,LOCATION_SZONE,0,1,nil) end
 	Duel.Hint(HINT_OPSELECTED,1-tp,e:GetDescription())
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_DESTROY)
-	local g1=Duel.SelectTarget(tp,c1013033.desfilter,tp,0,LOCATION_MZONE,1,1,nil)
+	local g1=Duel.SelectTarget(tp,Card.IsDestructable,tp,0,LOCATION_MZONE,1,1,nil)
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
-	local g2=Duel.SelectTarget(tp,c1013033.desfilter,tp,LOCATION_SZONE,0,1,1,nil)
+	local g2=Duel.SelectTarget(tp,Card.IsDestructable,tp,LOCATION_SZONE,0,1,1,nil)
 	Duel.SetOperationInfo(0,CATEGORY_DESTROY,g1,1,0,0)
 	Duel.SetOperationInfo(0,CATEGORY_TOGRAVE,g2,1,0,0)
 end
