@@ -24,6 +24,7 @@ function c1013074.initial_effect(c)
 	e2:SetProperty(EFFECT_FLAG_CARD_TARGET)
 	e2:SetType(EFFECT_TYPE_QUICK_O)
 	e2:SetCode(EVENT_FREE_CHAIN)
+	e2:SetHintTiming(0,TIMINGS_CHECK_MONSTER_E)
 	e2:SetRange(LOCATION_PZONE)
 	e2:SetCountLimit(1,id)
 	e2:SetLabel(CARD_AZEGAHL)
@@ -61,6 +62,7 @@ function c1013074.initial_effect(c)
 	e5:SetCountLimit(1,{id,2})
 	e5:SetCondition(function(e,tp,_,ep) return ep==1-tp and e:GetLabel()==1 end)
 	e5:SetCost(cod.chcost)
+	e5:SetTarget(cod.chtg)
 	e5:SetOperation(cod.chop)
 	c:RegisterEffect(e5)
 	local e6=Effect.CreateEffect(c)
@@ -95,7 +97,7 @@ function cod.negatkop(e,tp,eg,ep,ev,re,r,rp)
 	if #g<=0 or not Duel.SelectYesNo(tp,aux.Stringid(id,0)) then return end
 	local sg=g:Select(tp,1,1,nil)
 	if #sg<=0 then return end
-	if Duel.SendtoDeck(sg,nil,SEQ_DECKSHUFFLE,REASON_COST)>0 and Duel.NegateAttack() then
+	if Duel.SendtoGrave(sg,REASON_COST)>0 and Duel.NegateAttack() then
 		--skip battle phase
 		Duel.SkipPhase(1-tp,PHASE_BATTLE,RESET_PHASE+PHASE_BATTLE_STEP,1)
 	end
@@ -104,20 +106,30 @@ end
 --destroy monsters below atk
 function cod.descon(e)
 	local c=e:GetHandler()
+	if Duel.GetCurrentPhase()&(PHASE_MAIN1|PHASE_MAIN2)==0 then return end
 	return c:IsReleasable() and c:IsFaceup() and not c:IsStatus(STATUS_CHAINING)
 end
 function cod.destg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 	if chkc then return chkc:IsLocation(LOCATION_MZONE) and chkc:IsControler(tp) end
-	if chk==0 then return Duel.IsExistingTarget(Card.IsFaceup,tp,LOCATION_MZONE,0,1,nil) end
+	if chk==0 then return Duel.IsExistingTarget(Card.IsFaceup,tp,LOCATION_MZONE,0,1,nil)
+		and Duel.IsExistingMatchingCard(Card.IsDestructable,tp,0,LOCATION_MZONE,1,nil) end
+	--if applying pendy effects in mzone
+	if e:GetHandler():HasFlagEffect(CARD_AZEGAHL,1) then
+		Duel.Hint(HINT_OPSELECTED,1-tp,e:GetDescription())
+	end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TARGET)
 	local g=Duel.SelectTarget(tp,Card.IsFaceup,tp,LOCATION_MZONE,0,1,1,nil)
+	Duel.SetOperationInfo(0,CATEGORY_DESTROY,g,#g,tp,LOCATION_MZONE)
 end
 function cod.dfilter(c,atk)
-	return c:IsAttackBelow(atk) and c:IsDestructable()
+	return c:IsAttackBelow(atk) and c:IsDestructable() and c:IsFaceup()
 end
 function cod.desop(e,tp,eg,ep,ev,re,r,rp)
+	local c=e:GetHandler()
+	local ct=Duel.Release(c,REASON_EFFECT,tp)
+	Duel.BreakEffect()
 	local tc=Duel.GetFirstTarget()
-	if not tc then return end
+	if not tc or ct==0 then return end
 	local atk=tc:GetAttack()
 	local g=Duel.GetMatchingGroup(cod.dfilter,tp,0,LOCATION_MZONE,nil,atk)
 	Duel.Destroy(g,REASON_EFFECT)
@@ -152,10 +164,17 @@ function cod.cfilter(c)
 end
 function cod.valcheck(e,c)
 	local g=c:GetMaterial()
-	if g:IsExists(cod.cfilter,1,nil) then
-		e:GetLabelObject():SetLabel(1)
-	else
+	if not g:IsExists(cod.cfilter,1,nil) then
 		e:GetLabelObject():SetLabel(0)
+	else
+		e:GetLabelObject():SetLabel(1)
+		--hint
+		local e1=Effect.CreateEffect(c)
+		e1:SetDescription(aux.Stringid(id,4))
+		e1:SetType(EFFECT_TYPE_SINGLE)
+		e1:SetProperty(EFFECT_FLAG_CLIENT_HINT)
+		e1:SetReset(RESET_EVENT|RESETS_STANDARD_DISABLE&~RESET_TOFIELD)
+		c:RegisterEffect(e1)
 	end
 end
 
@@ -169,34 +188,61 @@ function cod.chcost(e,tp,eg,ep,ev,re,r,rp,chk)
 	local g=Duel.SelectMatchingCard(tp,cod.pafilter,tp,LOCATION_EXTRA,0,1,1,nil)
 	Duel.SendtoHand(g,nil,REASON_COST)
 end
+function cod.chtg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return true end
+	--if applying pendy effects in mzone
+	if e:GetHandler():HasFlagEffect(CARD_AZEGAHL,1) then
+		Duel.Hint(HINT_OPSELECTED,1-tp,e:GetDescription())
+	end
+end
 function cod.chop(e,tp,eg,ep,ev,re,r,rp)
 	local g=Group.CreateGroup()
 	Duel.ChangeTargetCard(ev,g)
 	Duel.ChangeChainOperation(ev,cod.repop)
 end
+local function getZones(seq,spell)
+	local this_mzone=1<<seq
+	local left_mzone=1<<(seq-1)
+	local right_mzone=1<<(seq+1)
+	local this_szone=1<<(seq+8)
+	local zone=0
+	--select current zone
+	if spell then
+		zone=zone|this_szone
+	else
+		zone=zone|this_mzone
+	end
+	--select mzones adjacent
+	if seq>4 then
+		zone=zone|left_mzone
+	elseif seq<1 then
+		zone=zone|right_mzone
+	else
+		zone=zone|(left_mzone|right_mzone)
+	end
+	--if extra mzone
+	if seq>4 and not spell then zone=this_mzone end
+	return zone
+end
 function cod.repop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
 	local seq=c:GetSequence()
-	local res=c:IsLocation(LOCATION_SZONE)
+	local spell=c:IsLocation(LOCATION_SZONE)
+	local zone=getZones(seq,spell)
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_FIELD)
 	e1:SetCode(EFFECT_DISABLE)
 	e1:SetRange(LOCATION_MZONE)
 	e1:SetTargetRange(0,LOCATION_ONFIELD)
 	e1:SetTarget(cod.distg)
-	e1:SetLabelObject({seq,res})
+	e1:SetLabel(zone)
 	e1:SetReset(RESET_PHASE+PHASE_END)
 	Duel.RegisterEffect(e1,1-tp)
 	local e2=e1:Clone()
 	e2:SetCode(EFFECT_DISABLE_TRAPMONSTER)
 	Duel.RegisterEffect(e2,1-tp)
+	Duel.Hint(HINT_ZONE,tp,zone)
 end
 function cod.distg(e,c)
-	local seq=e:GetLabelObject()[1]
-	local res=e:GetLabelObject()[2]
-	local adjmz=(c:IsLocation(LOCATION_MZONE) and c:IsSequence(seq-1,seq+1))
-	if res then
-		return adjmz or (c:GetSequence()==seq and c:IsLocation(LOCATION_SZONE))
-	end
-	return c:GetSequence()==seq or adjmz
+	return e:GetLabel()&(1<<c:GetSequence())~=0
 end

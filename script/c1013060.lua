@@ -23,7 +23,9 @@ function cod.initial_effect(c)
 	--atk
 	local e2=Effect.CreateEffect(c)
 	e2:SetType(EFFECT_TYPE_SINGLE)
-	e2:SetCode(EFFECT_MATERIAL_CHECK)
+	e2:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
+	e2:SetCode(EFFECT_SET_ATTACK)
+	e2:SetRange(LOCATION_MZONE)
 	e2:SetValue(cod.valcheck)
 	c:RegisterEffect(e2)
 	--special summon
@@ -88,16 +90,11 @@ end
 function cod.valcheck(e,c)
 	local g=c:GetMaterial()
 	local atk=0
-	for tc in aux.Next(g) do
+	g:ForEach(function(tc) 
 		local catk=tc:GetTextAttack()
 		atk=atk+(catk>=0 and catk or 0)
-	end
-	local e1=Effect.CreateEffect(c)
-	e1:SetType(EFFECT_TYPE_SINGLE)
-	e1:SetCode(EFFECT_SET_ATTACK)
-	e1:SetValue(atk)
-	e1:SetReset(RESET_EVENT+0xff0000)
-	c:RegisterEffect(e1)
+	end)
+	return atk
 end
 
 --special summon
