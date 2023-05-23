@@ -308,53 +308,49 @@ function Qued.RitualOperationK(filter,_type,lv,extrafil,matfilter,location,force
 		if #extra_eff_g>0 then forcedselection=reg_forced_select(forcedselection) end
 		Ritual.CheckMatFilter(matfilter,e,tp,mg,mg2)
 		local ft=Duel.GetLocationCount(tp,LOCATION_MZONE)
-		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-		local tg=Duel.SelectMatchingCard(tp,aux.NecroValleyFilter(Ritual.Filter),tp,location,0,1,1,nil,filter,_type,e,tp,mg,mg2,forcedselection,nil,lv,nil,POS_FACEUP)
-		if #tg>0 then
-			local tc=tg:GetFirst()
-			local lv=(lv and (type(lv)=="function" and lv(tc)) or lv) or tc:GetLevel()
-			lv=math.max(1,lv)
-			Ritual.SummoningLevel=lv
-			local mat=nil
-			mg:Match(Card.IsCanBeRitualMaterial,tc,tc)
-			mg:Merge(mg2-tc)
-			local func=forcedselection and WrapTableReturn(forcedselection) or nil
-			if ft>0 and not func then
-				Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_RELEASE)
-				if _type==RITPROC_EQUAL then
-					mat=mg:SelectWithSumEqual(tp,requirementfunc or Card.GetRitualLevel,lv,1,#mg,tc)
-				else
-					mat=mg:SelectWithSumGreater(tp,requirementfunc or Card.GetRitualLevel,lv,tc)
-				end
+		local tc=e:GetHandler()
+		local lv=(lv and (type(lv)=="function" and lv(tc)) or lv) or tc:GetLevel()
+		lv=math.max(1,lv)
+		Ritual.SummoningLevel=lv
+		local mat=nil
+		mg:Match(Card.IsCanBeRitualMaterial,tc,tc)
+		mg:Merge(mg2-tc)
+		local func=forcedselection and WrapTableReturn(forcedselection) or nil
+		if ft>0 and not func then
+			Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_RELEASE)
+			if _type==RITPROC_EQUAL then
+				mat=mg:SelectWithSumEqual(tp,requirementfunc or Card.GetRitualLevel,lv,1,#mg,tc)
 			else
-				mat=aux.SelectUnselectGroup(mg,e,tp,1,lv,Ritual.Check(tc,lv,func,_type,requirementfunc),1,tp,HINTMSG_RELEASE,Ritual.Finishcon(tc,lv,requirementfunc,_type))
+				mat=mg:SelectWithSumGreater(tp,requirementfunc or Card.GetRitualLevel,lv,tc)
 			end
-			--check if a card from an "once per turn" EFFECT_EXTRA_RITUAL_MATERIAL effect was selected
-			local extra_eff_g=mat:Filter(Card.IsHasEffect,nil,EFFECT_EXTRA_RITUAL_MATERIAL)
-			for tmp_c in extra_eff_g:Iter() do
-				local effs={tmp_c:IsHasEffect(EFFECT_EXTRA_RITUAL_MATERIAL)}
-				for _,eff in ipairs(effs) do
-					--if eff is OPT and tmp_c is not returned
-					--by the Ritual Spell's exrafil
-					--then use the count limit and register
-					--the flag to turn the extra eff OFF
-					--requires the EFFECT_EXTRA_RITUAL_MATERIAL effect
-					--to check the flag in its condition
-					local _,max_count_limit=eff:GetCountLimit()
-					if max_count_limit>0 and not mg2:IsContains(tmp_c) then
-						eff:UseCountLimit(tp,1)
-						Duel.RegisterFlagEffect(tp,eff:GetHandler():GetCode(),RESET_PHASE+PHASE_END,0,1)
-					end
+		else
+			mat=aux.SelectUnselectGroup(mg,e,tp,1,lv,Ritual.Check(tc,lv,func,_type,requirementfunc),1,tp,HINTMSG_RELEASE,Ritual.Finishcon(tc,lv,requirementfunc,_type))
+		end
+		--check if a card from an "once per turn" EFFECT_EXTRA_RITUAL_MATERIAL effect was selected
+		local extra_eff_g=mat:Filter(Card.IsHasEffect,nil,EFFECT_EXTRA_RITUAL_MATERIAL)
+		for tmp_c in extra_eff_g:Iter() do
+			local effs={tmp_c:IsHasEffect(EFFECT_EXTRA_RITUAL_MATERIAL)}
+			for _,eff in ipairs(effs) do
+				--if eff is OPT and tmp_c is not returned
+				--by the Ritual Spell's exrafil
+				--then use the count limit and register
+				--the flag to turn the extra eff OFF
+				--requires the EFFECT_EXTRA_RITUAL_MATERIAL effect
+				--to check the flag in its condition
+				local _,max_count_limit=eff:GetCountLimit()
+				if max_count_limit>0 and not mg2:IsContains(tmp_c) then
+					eff:UseCountLimit(tp,1)
+					Duel.RegisterFlagEffect(tp,eff:GetHandler():GetCode(),RESET_PHASE+PHASE_END,0,1)
 				end
 			end
-			tc:SetMaterial(mat)
-			Duel.SendtoGrave(mat:Clone(),REASON_EFFECT+REASON_MATERIAL+REASON_RITUAL)
-			Duel.BreakEffect()
-			Duel.SpecialSummon(tc,SUMMON_TYPE_RITUAL,tp,tp,false,true,POS_FACEUP)
-			tc:CompleteProcedure()
-			if tc:IsFacedown() then Duel.ConfirmCards(1-tp,tc) end
-			Ritual.SummoningLevel=nil
 		end
+		tc:SetMaterial(mat)
+		Duel.SendtoGrave(mat:Clone(),REASON_EFFECT+REASON_MATERIAL+REASON_RITUAL)
+		Duel.BreakEffect()
+		Duel.SpecialSummon(tc,SUMMON_TYPE_RITUAL,tp,tp,false,true,POS_FACEUP)
+		tc:CompleteProcedure()
+		if tc:IsFacedown() then Duel.ConfirmCards(1-tp,tc) end
+		Ritual.SummoningLevel=nil
 	end
 end
 
