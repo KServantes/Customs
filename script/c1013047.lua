@@ -4,102 +4,56 @@ Duel.LoadScript('kd.lua')
 function c1013047.initial_effect(c)
 	--Pendulum Set
 	Pendulum.AddProcedure(c)
-	--Recover Materials
+	--Fusion Sub
 	local e1=Effect.CreateEffect(c)
-	e1:SetDescription(aux.Stringid(id,0))
-	e1:SetProperty(EFFECT_FLAG_NO_TURN_RESET)
-	e1:SetType(EFFECT_TYPE_IGNITION)
-	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
-	e1:SetRange(LOCATION_PZONE)
-	e1:SetCountLimit(1)
-		--for copy effect
-	e1:SetLabel(CARD_AZEGAHL)
-	e1:SetCost(cod.spcost)
-	e1:SetTarget(cod.sptg)
-	e1:SetOperation(cod.spop)
+	e1:SetType(EFFECT_TYPE_SINGLE)
+	e1:SetCode(EFFECT_FUSION_SUBSTITUTE)
+	e1:SetCondition(cod.subcon)
+	e1:SetValue(function (e,c) return c:IsRace(RACE_ZOMBIE) end)
 	c:RegisterEffect(e1)
-	--Draw
+	--Search 1 Level 1
 	local e2=Effect.CreateEffect(c)
-	e2:SetDescription(aux.Stringid(id,1))
-	e2:SetProperty(EFFECT_FLAG_NO_TURN_RESET)
-	e2:SetType(EFFECT_TYPE_IGNITION)
-	e2:SetCategory(CATEGORY_TODECK)
+	e2:SetDescription(aux.Stringid(id,0))
+	e2:SetProperty(EFFECT_FLAG_DELAY)
+	e2:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
+	e2:SetCategory(CATEGORY_SEARCH)
 	e2:SetRange(LOCATION_PZONE)
-		--for copy effect
+	e2:SetCode(EVENT_SPSUMMON_SUCCESS)
+	--for copy effect
 	e2:SetLabel(CARD_AZEGAHL)
-	e2:SetCost(cod.drcost)
-	e2:SetTarget(cod.drtg)
-	e2:SetOperation(cod.drop)
+	e2:SetCondition(cod.scon)
+	e2:SetTarget(cod.stg)
+	e2:SetOperation(cod.sop)
 	c:RegisterEffect(e2)
 end
 
---Special Summon
-function cod.cfilter(c)
-	return c:IsAbleToGrave() and c:IsType(TYPE_NORMAL+TYPE_PENDULUM)
-end
-function cod.spcost(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.IsExistingMatchingCard(cod.cfilter,tp,LOCATION_HAND+LOCATION_ONFIELD,0,1,nil) end
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
-	local g=Duel.SelectMatchingCard(tp,cod.cfilter,tp,LOCATION_HAND+LOCATION_ONFIELD,0,1,1,nil)
-	e:SetLabel(g:GetFirst():GetLevel())
-	Duel.SendtoGrave(g,REASON_EFFECT)
-end
-function cod.spfilter(c,e,tp)
-	local types=TYPE_FUSION+TYPE_PENDULUM+TYPE_NORMAL
-	return c:GetType()&(types)==types and Duel.GetLocationCountFromEx(tp)>0 and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
-end
-function cod.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.IsExistingMatchingCard(cod.spfilter,tp,LOCATION_EXTRA,0,1,nil,e,tp) end
-	Duel.Hint(HINT_OPSELECTED,1-tp,e:GetDescription())
-	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_EXTRA)
-end
-function cod.spop(e,tp,eg,ep,ev,re,r,rp)
-	local c=e:GetHandler()
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-	local sg=Duel.SelectMatchingCard(tp,cod.spfilter,tp,LOCATION_EXTRA,0,1,1,nil,e,tp)
-	if #sg<=0 then return end
-	Duel.SpecialSummon(sg,0,tp,tp,false,false,POS_FACEUP)
-	local tc=sg:GetFirst()
-	local fid=c:GetFieldID()
-	tc:RegisterFlagEffect(id,RESET_EVENT+RESETS_STANDARD,0,1,fid)
-	local e1=Effect.CreateEffect(c)
-	e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
-	e1:SetCode(EVENT_PHASE+PHASE_END)
-	e1:SetCountLimit(1)
-	e1:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE)
-	e1:SetCondition(Qued.descon(tc,id,fid))
-	e1:SetOperation(Qued.desop(tc))
-	Duel.RegisterEffect(e1,tp)
+--Fusion
+function cod.subcon(e)
+	return e:GetHandler():IsLocation(LOCATION_PZONE) or e:GetHandler():HasFlagEffect(CARD_AZEGAHL,1)
 end
 
---Draw
-function cod.helper(tp)
-	local draw = 0
-	for i=1, 3 do
-		if Duel.IsPlayerCanDraw(tp, i) then
-			draw = i
-		end
+--Search
+function cod.ffilter(c,tp)
+	return c:GetType()&(TYPE_NORMAL|TYPE_FUSION)~=0 and c:IsRace(RACE_ZOMBIE)
+		and c:IsSetCard(0xf2) and c:IsSummonPlayer(tp) and c:IsSummonType(SUMMON_TYPE_FUSION)
+end
+function cod.scon(e,tp,eg,ep,ev,re,r,rp)
+	return eg:IsExists(cod.ffilter,1,nil,tp)
+end
+function cod.sfilter(c)
+	return c:GetLevel()==1 and c:IsSetCard(0xf2) and c:IsAbleToHand()
+end
+function cod.stg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return e:GetHandler():IsDestructable()
+		and Duel.IsExistingMatchingCard(cod.sfilter,tp,LOCATION_DECK|LOCATION_GRAVE,0,1,nil) end
+    Duel.SetOperationInfo(0,CATEGORY_SEARCH,nil,1,tp,LOCATION_DECK|LOCATION_GRAVE)
+end
+function cod.sop(e,tp,eg,ep,ev,re,r,rp)
+	local c=e:GetHandler()
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
+	local g=Duel.SelectMatchingCard(tp,cod.sfilter,tp,LOCATION_GRAVE|LOCATION_DECK,0,1,1,nil)
+	if #g<=0 then return end
+	if Duel.SendtoHand(g,nil,REASON_EFFECT)>0 then
+		Duel.Destroy(c,REASON_EFFECT)
 	end
-	return draw
-end
-function cod.drcost(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.IsExistingMatchingCard(Card.IsFaceup,tp,LOCATION_EXTRA,0,2,nil) end
-	local ct = cod.helper(tp)
-	local max = ct*2
-	if max<2 then return end
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TODECK)
-	local g=Duel.SelectMatchingCard(tp,Card.IsFaceup,tp,LOCATION_EXTRA,0,2,max,nil)
-	local sc=Duel.SendtoDeck(g,nil,SEQ_DECKSHUFFLE,REASON_EFFECT)
-	e:SetLabel(sc)
-end
-function cod.drtg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return e:GetLabel() and Duel.IsPlayerCanDraw(tp, e:GetLabel()/2) end
-	Duel.Hint(HINT_OPSELECTED,1-tp,e:GetDescription())
-	Duel.SetTargetPlayer(tp)
-    Duel.SetTargetParam(e:GetLabel()/2)
-    Duel.SetOperationInfo(0,CATEGORY_DRAW,nil,0,tp,1)
-end
-function cod.drop(e,tp,eg,ep,ev,re,r,rp)
-	local p,d=Duel.GetChainInfo(0,CHAININFO_TARGET_PLAYER,CHAININFO_TARGET_PARAM)
-    Duel.Draw(p,d,REASON_EFFECT)
 end
