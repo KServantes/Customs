@@ -3,7 +3,7 @@ local cod,id=GetID()
 function cod.initial_effect(c)
 	--Activate
 	local e1=Effect.CreateEffect(c)
-	e1:SetCategory(CATEGORY_DRAW+CATEGORY_REMOVE+CATEGORY_SEARCH)
+	e1:SetCategory(CATEGORY_DRAW+CATEGORY_REMOVE+CATEGORY_SEARCH+CATEGORY_TOEXTRA)
 	e1:SetType(EFFECT_TYPE_ACTIVATE)
 	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
 	e1:SetCode(EVENT_FREE_CHAIN)
@@ -30,58 +30,59 @@ function cod.target(e,tp,eg,ep,ev,re,r,rp,chk)
 	Duel.SetOperationInfo(0,CATEGORY_DRAW,nil,0,tp,no)
 end
 function cod.hfilter(c)
-	return c:IsRace(RACE_ZOMBIE) and c:IsType(TYPE_NORMAL)
+	return c:IsRace(RACE_ZOMBIE) and c:IsType(TYPE_NORMAL|TYPE_PENDULUM)
 end
 function cod.activate(e,tp,eg,ep,ev,re,r,rp)
 	local p,d=Duel.GetChainInfo(0,CHAININFO_TARGET_PLAYER,CHAININFO_TARGET_PARAM)
 	local ct=Duel.Draw(p,d,REASON_EFFECT)
 	Duel.ShuffleHand(p)
 	Duel.BreakEffect()
-	local zct=Duel.GetMatchingGroupCount(cod.hfilter,tp,LOCATION_HAND,0,nil)
-	local g
-	--if has max cards
-	if zct>=ct then
-		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_DESTROY)
-		g=Duel.SelectMatchingCard(tp,cod.hfilter,tp,LOCATION_HAND,0,ct,ct,nil)
-	--if has some card(s)
-	elseif zct<=ct and zct>0 then
-		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_DESTROY)
-		g=Duel.SelectMatchingCard(tp,cod.hfilter,tp,LOCATION_HAND,0,zct,zct,nil)
-	--if has no cards
-	else
+	local hct=Duel.GetMatchingGroupCount(cod.hfilter,tp,LOCATION_HAND,0,nil)
+	local sct=0
+	if hct>=ct then
+		--if has max cards
+		sct=ct
+	elseif hct<=ct and hct>0 then
+		--if has some card(s)
+		sct=hct
+	end
+	if sct==0 then
+		--if has no card(s)
 		local sg=Duel.GetFieldGroup(p,LOCATION_HAND,0)
-		if Duel.Remove(sg,POS_FACEUP,REASON_EFFECT)==0 then
+		if Duel.Remove(sg,POS_FACEDOWN,REASON_EFFECT)==0 then
 			Duel.ConfirmCards(1-p,sg)
 			Duel.ShuffleHand(p)
 		end
-	end
-	if not g or #g<=0 then return end
-	if g and #g>0 then
-		Duel.Destroy(g,REASON_EFFECT)
-		local desg=Duel.GetOperatedGroup():Filter(cod.gfilter,nil)
-		if #desg<=0 then return end
-		local sg=desg:Clone()
-		-- local zdg=sg:Filter()
-		local zdg=Duel.GetMatchingGroup(cod.thfilter,tp,LOCATION_DECK,0,nil)
-		for tc in sg:Iter() do
-			if Duel.SelectYesNo(tp,ux.Stringid(id,1)) and #zdg and Duel.IsPlayerCanSendtoHand(p) then
-				Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
-				local thg=aux.SelectUnselectGroup(zdg,e,tp,1,1,aux.dncheck,1,tp,HINTMSG_ATOHAND)
-				if #thg>0 then
-					Duel.SendtoHand(thg,nil,REASON_EFFECT)
-					Duel.ConfirmCards(1-p,thg)
-					Duel.ShuffleHand(p)
-				end
+	else
+		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SELECT)
+		local g=Duel.SelectMatchingCard(tp,cod.hfilter,tp,LOCATION_HAND,0,sct,sct,nil)
+		if #g<=0 then return end
+		local exct=Duel.SendtoExtraP(g,nil,REASON_EFFECT)
+		local zct=Duel.GetMatchingGroupCount(cod.thfilter,tp,LOCATION_DECK|LOCATION_GRAVE,0,nil)
+		if zct<exct then exct=zct end
+		if Duel.SelectYesNo(tp,aux.Stringid(id,1)) and exct>0 and Duel.IsPlayerCanSendtoHand(p) then
+			Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
+			local thg=Duel.SelectMatchingCard(p,cod.thfilter,tp,LOCATION_DECK|LOCATION_GRAVE,0,1,exct,nil)
+			if #thg>0 then
+				Duel.SendtoHand(thg,nil,REASON_EFFECT)
+				Duel.ConfirmCards(1-p,thg)
+				Duel.ShuffleHand(p)
 			end
 		end
 	end
-end
-function cod.gfilter(c)
-	return not c:IsLocation(LOCATION_GRAVE)
+	local e1=Effect.CreateEffect(e:GetHandler())
+	e1:SetType(EFFECT_TYPE_FIELD)
+	e1:SetCode(EFFECT_CANNOT_SPECIAL_SUMMON)
+	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET+EFFECT_FLAG_CLIENT_HINT)
+	e1:SetDescription(aux.Stringid(id,2))
+	e1:SetTargetRange(1,0)
+	e1:SetReset(RESET_PHASE+PHASE_END)
+	e1:SetTarget(cod.splimit)
+	Duel.RegisterEffect(e1,tp)
 end
 function cod.thfilter(c)
-	return c:IsRace(RACE_ZOMBIE) and c:IsAbleToHand()
+	return c:IsLevelBelow(5) and c:IsRace(RACE_ZOMBIE) and c:IsAbleToHand()
 end
--- function cod.nfilter(c,code,lv)
--- 	return c:GetCode()~=code and c:GetLevel()<=lv
--- end
+function cod.splimit(e,c)
+	return not c:IsRace(RACE_ZOMBIE)
+end
