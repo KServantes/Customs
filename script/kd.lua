@@ -152,7 +152,7 @@ end
 function Qued.SpecialFilter(c,e,tp,min,max)
 	if min == max then return false end
 	local lv = c:GetLevel()
-	return lv>=min and lv<=max and c:IsType(TYPE_FUSION) 
+	return lv>=min and lv<=max and c:GetType()&(TYPE_FUSION|TYPE_NORMAL)==(TYPE_NORMAL|TYPE_FUSION)
 		and Duel.GetLocationCountFromEx(tp,tp,nil,c)>0 and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
 end
 function Qued.SpecialTarget(c)
