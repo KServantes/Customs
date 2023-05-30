@@ -60,7 +60,7 @@ function c1013074.initial_effect(c)
 	e5:SetCode(EVENT_CHAINING)
 	e5:SetRange(LOCATION_MZONE)
 	e5:SetCountLimit(1,{id,2})
-	e5:SetCondition(function(e,tp,_,ep) return ep==1-tp and e:GetLabel()==1 end)
+	e5:SetCondition(cod.chcon)
 	e5:SetCost(cod.chcost)
 	e5:SetTarget(cod.chtg)
 	e5:SetOperation(cod.chop)
@@ -188,6 +188,10 @@ function cod.chcost(e,tp,eg,ep,ev,re,r,rp,chk)
 	local g=Duel.SelectMatchingCard(tp,cod.pafilter,tp,LOCATION_EXTRA,0,1,1,nil)
 	Duel.SendtoHand(g,nil,REASON_COST)
 end
+function cod.chcon(e,tp,eg,ep,ev,re,r,rp)
+	return ep==1-tp and e:GetLabel()==1
+		and not e:GetHandler():IsStatus(STATUS_BATTLE_DESTROYED)
+end
 function cod.chtg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return true end
 	--if applying pendy effects in mzone
@@ -222,6 +226,8 @@ local function getZones(seq,spell)
 	end
 	--if extra mzone
 	if seq>4 and not spell then zone=this_mzone end
+	--if field spell
+	if seq>4 and spell then zone=this_szone end
 	return zone
 end
 function cod.repop(e,tp,eg,ep,ev,re,r,rp)
@@ -242,7 +248,6 @@ function cod.repop(e,tp,eg,ep,ev,re,r,rp)
 	e2:SetCode(EFFECT_DISABLE_TRAPMONSTER)
 	Duel.RegisterEffect(e2,1-tp)
 	Duel.Hint(HINT_ZONE,tp,zone)
-	Duel.Hint(HINT_ZONE,1-tp,zone)
 end
 function cod.distg(e,c)
 	return e:GetLabel()&(1<<c:GetSequence())~=0
