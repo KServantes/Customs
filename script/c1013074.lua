@@ -248,7 +248,6 @@ function cod.repop(e,tp,eg,ep,ev,re,r,rp)
 	e2:SetCode(EFFECT_DISABLE_TRAPMONSTER)
 	Duel.RegisterEffect(e2,1-tp)
 	Duel.Hint(HINT_ZONE,tp,zone)
-	Duel.Hint(HINT_ZONE,1-tp,zone)
 end
 function cod.distg(e,c)
 	return e:GetLabel()&(1<<c:GetSequence())~=0
