@@ -189,7 +189,8 @@ function cod.chcost(e,tp,eg,ep,ev,re,r,rp,chk)
 	Duel.SendtoHand(g,nil,REASON_COST)
 end
 function cod.chcon(e,tp,eg,ep,ev,re,r,rp)
-	return ep==1-tp and e:GetLabel()==1
+	local loc=Duel.GetChainInfo(ev,CHAININFO_TRIGGERING_LOCATION)
+	return ep==1-tp and e:GetLabel()==1 and loc==LOCATION_ONFIELD
 		and not e:GetHandler():IsStatus(STATUS_BATTLE_DESTROYED)
 end
 function cod.chtg(e,tp,eg,ep,ev,re,r,rp,chk)
