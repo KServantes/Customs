@@ -190,7 +190,7 @@ function cod.chcost(e,tp,eg,ep,ev,re,r,rp,chk)
 end
 function cod.chcon(e,tp,eg,ep,ev,re,r,rp)
 	local loc=Duel.GetChainInfo(ev,CHAININFO_TRIGGERING_LOCATION)
-	return ep==1-tp and e:GetLabel()==1 and loc==LOCATION_ONFIELD
+	return ep==1-tp and e:GetLabel()==1 and LOCATION_ONFIELD&loc~=0
 		and not e:GetHandler():IsStatus(STATUS_BATTLE_DESTROYED)
 end
 function cod.chtg(e,tp,eg,ep,ev,re,r,rp,chk)
@@ -218,7 +218,7 @@ local function getZones(seq,spell)
 		zone=zone|this_mzone
 	end
 	--select mzones adjacent
-	if seq>4 then
+	if seq>3 then
 		zone=zone|left_mzone
 	elseif seq<1 then
 		zone=zone|right_mzone
@@ -249,7 +249,14 @@ function cod.repop(e,tp,eg,ep,ev,re,r,rp)
 	e2:SetCode(EFFECT_DISABLE_TRAPMONSTER)
 	Duel.RegisterEffect(e2,1-tp)
 	Duel.Hint(HINT_ZONE,tp,zone)
+	Duel.Hint(HINT_ZONE,1-tp,zone<<16)
 end
 function cod.distg(e,c)
-	return e:GetLabel()&(1<<c:GetSequence())~=0
+	local szone=1<<(c:GetSequence()+8)
+	local mzone=1<<c:GetSequence()
+	if c:IsLocation(LOCATION_SZONE) then
+		return e:GetLabel()&szone~=0
+	else
+		return e:GetLabel()&mzone~=0
+	end
 end
