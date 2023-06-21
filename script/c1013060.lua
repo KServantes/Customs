@@ -88,7 +88,7 @@ end
 
 --atk add
 function cod.valcheck(e,c)
-	local g=c:GetMaterial()
+	local g=c:GetOverlayGroup()
 	local atk=0
 	g:ForEach(function(tc) 
 		local catk=tc:GetTextAttack()
