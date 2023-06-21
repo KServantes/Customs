@@ -63,7 +63,7 @@ function c1013055.spop(e,tp,eg,ep,ev,re,r,rp)
 	end
 end
 function c1013055.atkcon(e,tp,eg,ep,ev,re,r,rp)
-	return ((Duel.GetAttacker()==e:GetHandler() and Duel.GetAttackTarget()~=nil) or Duel.GetAttackTarget()==e:GetHandler())
+	return Duel.GetAttacker()==e:GetHandler() or Duel.GetAttackTarget()==e:GetHandler()
 end
 function c1013055.atkop(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
