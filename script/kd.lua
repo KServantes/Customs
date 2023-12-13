@@ -51,7 +51,6 @@ local function getLvBetween(c)
 end
 --card with self flag
 local function metaFlag(c)
-	Debug.Message('has flag? ' .. tostring(c.flag==1))
 	return c.flag==1
 end
 --add monster attribute
