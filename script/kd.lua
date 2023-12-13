@@ -23,15 +23,17 @@ RESETS_BLOOD_OMEN = RESET_TODECK|RESET_TOHAND|RESET_REMOVE
 --CONSTANTS
 HINTMSG_CHAINNO=4005
 
-TYPE_BLOOD_SPELL=TYPE_QUICKPLAY+TYPE_SPELL
-TYPE_BLOOD_TRAP=TYPE_COUNTER+TYPE_TRAP
-TYPE_EFFECT_MON=TYPE_EFFECT+TYPE_MONSTER
-TYPE_TUNER_MON=TYPE_EFFECT_MON+TYPE_TUNER
+SET_BLOOD_OMEN = 0xd3d
+
+TYPE_BLOOD_SPELL=TYPE_QUICKPLAY|TYPE_SPELL
+TYPE_BLOOD_TRAP=TYPE_COUNTER|TYPE_TRAP
+TYPE_EFFECT_MON=TYPE_EFFECT|TYPE_MONSTER
+TYPE_TUNER_MON=TYPE_EFFECT_MON|TYPE_TUNER
 
 
 --[[ Rewrites and Custom Functions ]]---
-local card_can_special, card_can_be_fusion_mat, duel_special_summon = 
-	Card.IsCanBeSpecialSummoned, Card.IsCanBeFusionMaterial, Duel.SpecialSummon
+local card_can_special, card_can_be_fusion_mat, duel_special_summon, card_get_code = 
+	Card.IsCanBeSpecialSummoned, Card.IsCanBeFusionMaterial, Duel.SpecialSummon, Card.GetCode
 
 --Min and Max levels between scales
 local function getLvBetween(c)
@@ -48,9 +50,9 @@ local function getLvBetween(c)
 	return min, max
 end
 --card with self flag
-local function selfCode(c)
-	local id=c:GetCode()
-	return c:GetFlagEffect(id)>0
+local function metaFlag(c)
+	Debug.Message('has flag? ' .. tostring(c.flag==1))
+	return c.flag==1
 end
 --add monster attribute
 local function addMonAtt(c)
@@ -64,7 +66,7 @@ local function addMonAtt(c)
 end
 Card.IsCanBeSpecialSummoned=function(c,e,sumtype,sumplayer,nochk,nolim,...)
     local options={...}
-    if c:IsType(TYPE_MONSTER) and c:IsSetCard(0xd3d) and selfCode(c) then
+    if c:IsType(TYPE_MONSTER) and c:IsSetCard(SET_BLOOD_OMEN) and metaFlag(c) then
         return card_can_special(c,e,sumtype,sumplayer,true,nolim,table.unpack(options))
     end
     return card_can_special(c,e,sumtype,sumplayer,nochk,nolim,table.unpack(options))
@@ -82,29 +84,44 @@ Duel.SpecialSummon=function(cards,sumtype,sumplayer,tg_player,nochk,nolim,pos,..
         end
     else
         local sg=Group.CreateGroup()+cards
+        local bg
         local sumct=0
-        sg=sg:Filter(Qued.bofilter,nil)
-        for tc in sg:Iter() do
-            addMonAtt(tc)
-            Duel.SpecialSummonStep(tc,sumtype,sumplayer,tg_player,true,nolim,pos,table.unpack(options))
-            tc:AddMonsterAttributeComplete()
+        bg=sg:Filter(Qued.bofilter,nil)
+        if #bg==0 then goto summon end
+        for sc in bg:Iter() do
+            addMonAtt(sc)
+            Duel.SpecialSummonStep(sc,sumtype,sumplayer,tg_player,true,nolim,pos,table.unpack(options))
+            sc:AddMonsterAttributeComplete()
             sumct=sumct+1
-            cards:RemoveCard(tc)
+            sg:RemoveCard(sc)
         end
         Duel.SpecialSummonComplete()
-        if #cards==0 then return sumct end
-        return duel_special_summon(cards,sumtype,sumplayer,tg_player,nochk,nolim,pos,table.unpack(options)) + sumct
+        if #bg>0 and sg==0 then return sumct end
+        ::summon::
+        return duel_special_summon(sg,sumtype,sumplayer,tg_player,nochk,nolim,pos,table.unpack(options)) + sumct
     end
 end
 Card.IsCanBeFusionMaterial=function(c,fuscard,ign_mon)
-	if c:IsSetCard(0xd3d) and selfCode(c) then
+	if c:IsSetCard(SET_BLOOD_OMEN) and metaFlag(c) then
 		return true
 	end
 	return card_can_be_fusion_mat(c,fuscard,ign_mon)
 end
-function Qued.bofilter(c)
-	return c:IsSetCard(0xd3d) and selfCode(c)
+Card.GetCode=function(c)
+	if c.extra_codes then
+		local ct={}
+		for code,_ in pairs(c.extra_codes) do
+			table.insert(ct,code)
+		end
+		return table.unpack(ct)
+	end
+	return card_get_code(c)
 end
+
+function Qued.bofilter(c)
+	return c:IsSetCard(SET_BLOOD_OMEN) and metaFlag(c)
+end
+
 
 --[[ Reborn Pepe Functions ]]---
 
@@ -358,14 +375,23 @@ end
 --Add monster attributes to spell/trap cards at all times
 function Qued.AddAttributes(c,spell)
 	local card=c:GetMetatable()
-	local atts={cset=0xd3d,ctpe=0x21,catk=1300,cdef=0,clvl=3,crac=RACE_ZOMBIE,catt=ATTRIBUTE_DARK}
+	local atts={cset=SET_BLOOD_OMEN,ctpe=0x21,catk=1300,cdef=0,clvl=3,crac=RACE_ZOMBIE,catt=ATTRIBUTE_DARK}
+
+	-- reg permatypes
 	if card.atts then
-		for att,_ in pairs(atts) do
-			if card.atts[att] then
-				atts[att]=card.atts[att]
+		if not card.flag then
+			for att,_ in pairs(atts) do
+				if card.atts[att] then
+					atts[att]=card.atts[att]
+					card.atts = atts
+				end
 			end
 		end
+	else
+		card.atts = atts
 	end
+
+	--active flag
 	if not card.flag then
 		card.flag=0
 	end
@@ -414,7 +440,7 @@ function Qued.AddAttributes(c,spell)
 	me8:SetOperation(Qued.resetflag)
 	c:RegisterEffect(me8)
 	local me9=me8:Clone()
-	me9:SetCode(EVENT_LEAVE_FIELD)
+	me9:SetCode(EVENT_LEAVE_GRAVE)
 	c:RegisterEffect(me9)
 end
 function Qued.resetflag(e,tp,eg,ep,ev,re,r,rp)
@@ -428,34 +454,44 @@ function Qued.resetflag(e,tp,eg,ep,ev,re,r,rp)
 	end
 end
 
+--The Common Spell Counter
+function Qued.AddSpellCounter(c,id)
+	Duel.AddCustomActivityCounter(id,ACTIVITY_CHAIN,Qued.spellfilter)
+end
+function Qued.spellfilter(re)
+	return not (re:IsActiveType(TYPE_SPELL) and re:GetHandler():IsSetCard(SET_BLOOD_OMEN))
+end
+
 --default spell/trap card activations
 --special summon
-function Qued.BloodOmenSpellActivate(c)
-	local id,card=c:GetCode(),c:GetMetatable()
+function Qued.BloodOmenSpellActivate(c,id)
+	local card=c:GetMetatable()
 	local e1=Effect.CreateEffect(c)
 	e1:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e1:SetType(EFFECT_TYPE_ACTIVATE)
 	e1:SetCode(EVENT_FREE_CHAIN)
-	e1:SetTarget(Qued.STarget(id,card))
-	e1:SetOperation(Qued.SActivate(id))
+	e1:SetTarget(Qued.BloodTarget(id,card))
+	e1:SetOperation(Qued.BloodOperation(id,card))
 	c:RegisterEffect(e1)
 end
 
-function Qued.STarget(id,card)
+function Qued.BloodTarget(id,card)
 	return function(e,tp,eg,ep,ev,re,r,rp,chk)
+		local att = card.atts
 		if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0 and e:IsHasType(EFFECT_TYPE_ACTIVATE) 
-			and Duel.IsPlayerCanSpecialSummonMonster(tp,id,0xd3d,0x21,1300,0,3,RACE_ZOMBIE,ATTRIBUTE_DARK) end
+			and Duel.IsPlayerCanSpecialSummonMonster(tp,id,att.cset,att.ctpe,att.catk,att.cdef,att.clvl,att.crace,att.catt) end
 		Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,e:GetHandler(),1,0,0)
 		e:GetHandler():RegisterFlagEffect(id,RESET_EVENT+RESETS_BLOOD_OMEN,0,0)
 		card.flag=1
 	end
 end
-function Qued.SActivate(id)
+function Qued.BloodOperation(id,card)
 	return function(e,tp,eg,ep,ev,re,r,rp)
+		local att = card.atts
 		if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
 		local c=e:GetHandler()
-		if c:IsRelateToEffect(e) and Duel.IsPlayerCanSpecialSummonMonster(tp,id,0xd3d,0x21,1300,0,3,RACE_ZOMBIE,ATTRIBUTE_DARK) then
-			c:AddMonsterAttribute(TYPE_EFFECT)
+		if c:IsRelateToEffect(e) and Duel.IsPlayerCanSpecialSummonMonster(tp,id,att.cset,att.ctype,att.catk,att.cdef,att.clvl,att.crace,att.catt) then
+			addMonAtt(c)
 			Duel.SpecialSummonStep(c,0,tp,tp,true,false,POS_FACEUP)
 			c:AddMonsterAttributeComplete()
 		end
@@ -504,7 +540,7 @@ function Qued.PendyCost(e,tp,eg,ep,ev,re,r,rp,chk)
 	Duel.RegisterEffect(e1,tp)
 end
 function Qued.sumlimit(e,c,sump,sumtype,sumpos,targetp,se)
-	return not c:IsSetCard(0xd3d)
+	return not c:IsSetCard(SET_BLOOD_OMEN)
 end
 function Qued.PendyFilter(c,e,tp,lscale,rscale,lvchk)
 	if lscale>rscale then lscale,rscale=rscale,lscale end
@@ -514,7 +550,7 @@ function Qued.PendyFilter(c,e,tp,lscale,rscale,lvchk)
 	else
 		lv=c:GetLevel()
 	end
-	return c:IsSetCard(0xd3d) and selfCode(c) 
+	return c:IsSetCard(SET_BLOOD_OMEN) and metaFlag(c) 
 		and (lvchk or (lv>lscale and lv<rscale) or c:IsHasEffect(511004423)) 
 			and c:IsCanBeSpecialSummoned(e,SUMMON_TYPE_PENDULUM,tp,false,false) and not c:IsForbidden()
 end
@@ -565,7 +601,7 @@ function Qued.PendyOperation()
 		Duel.HintSelection(c,true)
 		Duel.HintSelection(rpz,true)
 		for tc in sg:Iter() do
-	        if tc:IsSetCard(0xd3d) and selfCode(tc) then
+	        if tc:IsSetCard(SET_BLOOD_OMEN) and metaFlag(tc) then
 	            addMonAtt(tc)
 	            Duel.SpecialSummonStep(tc,SUMMON_TYPE_PENDULUM,tp,tp,true,false,POS_FACEUP)
 	            tc:AddMonsterAttributeComplete()
@@ -573,14 +609,6 @@ function Qued.PendyOperation()
         end
         Duel.SpecialSummonComplete()
 	end
-end
-
---The Common Spell Counter
-function Qued.AddSpellCounter(c,id)
-	Duel.AddCustomActivityCounter(id,ACTIVITY_CHAIN,Qued.spellfilter)
-end
-function Qued.spellfilter(re)
-	return not (re:IsActiveType(TYPE_SPELL) and re:GetHandler():IsSetCard(0xd3d))
 end
 
 --Custom Blood Omen Link Proc
@@ -629,7 +657,7 @@ function Qued.CheckChain(ct,tp)
 		local ce,cp=Duel.GetChainInfo(i,CHAININFO_TRIGGERING_EFFECT,CHAININFO_TRIGGERING_PLAYER)
 		local rc=ce:GetHandler()
 		if rc and rc:IsType(TYPE_MONSTER) and Duel.IsChainNegatable(i) 
-			and (not rc:IsSetCard(0xd3d) or cp~=tp) then flag=true end
+			and (not rc:IsSetCard(SET_BLOOD_OMEN) or cp~=tp) then flag=true end
 		i=i+1
 	end
 	return flag
@@ -637,9 +665,9 @@ end
 --returns chain table 'ch_t' with the chain link number before the chain's effect object
 --returns chain group the cards from the chain
 function Qued.chainfilter(c,cp,tp)
-	return c:IsType(TYPE_MONSTER) and (not c:IsSetCard(0xd3d) or cp~=tp)
+	return c:IsType(TYPE_MONSTER) and (not c:IsSetCard(SET_BLOOD_OMEN) or cp~=tp)
 end
-function Qued.GetChainLinkInfo(ct,tp)
+function Qued.GetChainTableAndGroup(ct,tp)
 	local cg=Group.CreateGroup()
 	local ch_t={}
 	for i=1,ct do
@@ -660,7 +688,7 @@ function Qued.GetChainLinkInfo(ct,tp)
 end
 strings_table={4000,4001,4002,4003,4004}
 --returns the chain link no. selected...hopefully with message
-function Qued.GetChainLinkid(ch_t,nc,tp)
+function Qued.GetChainToNegateFromTable(ch_t,nc,tp)
 	local op=nil
 	local ChainTable=ch_t[nc]
 	if not ch_t or not ChainTable then
@@ -685,4 +713,64 @@ function Qued.GetChainLinkid(ch_t,nc,tp)
 		op=ChainTable[1]
 	end
 	return op
+end
+
+--"This card gains the names of its Synchro Materials used for its Synchro Summon."
+--
+function Qued.RegisterExtraCodes(c,id)
+	local card=c:GetMetatable()
+	if card.extra_codes==nil then card.extra_codes={} end
+	if card.extra_codes[id]==nil then card.extra_codes[id]=true end
+	--Gain names
+	local e0=Effect.CreateEffect(c)
+	e0:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_CONTINUOUS)
+	e0:SetCode(EVENT_SPSUMMON_SUCCESS)
+	e0:SetRange(LOCATION_MZONE)
+	e0:SetCondition(function (e) return e:GetHandler():GetSummonType()&SUMMON_TYPE_SYNCHRO~=0 end)
+	e0:SetOperation(Qued.CodeRegOp(card))
+	c:RegisterEffect(e0)
+	--if leaves field for any other reason
+	local e0b=Effect.CreateEffect(c)
+	e0b:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_CONTINUOUS)
+	e0b:SetCode(EVENT_LEAVE_FIELD_P)
+	e0b:SetOperation(Qued.CodeResetOp(card))
+	c:RegisterEffect(e0b)
+end
+
+function Qued.CodeRegOp(card)
+	return function (e,tp,eg,ep,ev,re,r,rp)
+		local c=e:GetHandler()
+		local g=c:GetMaterial()
+		local extra_code_table=c.extra_codes
+		if c:IsFacedown() or #g<=0 then return end
+		for tc in g:Iter() do
+			local codes={tc:GetCode()}
+			if #codes>1 then
+				--register multiple codes
+				for i,codx in ipairs(codes) do
+					extra_code_table[codx]=true
+				end
+
+				if tc.extra_codes then
+					--reset passed down codes
+					local tmt=tc:GetMetatable()
+					tmt.extra_codes={tc:GetOriginalCode()}
+				end
+			else
+				--register single code
+				extra_code_table[tc:GetCode()]=true
+			end
+		end
+	end
+end
+
+function Qued.CodeResetOp(card)
+	return function (e,tp,eg,ep,ev,re,r,rp)
+		local c=e:GetHandler()
+		local rc=re:GetHandler()
+		if r&(REASON_SYNCHRO+REASON_MATERIAL)~=0 
+			and (rc:GetType()&TYPE_SYNCHRO)~=0 then return end
+		--on leaving field for other reason reset
+		card.extra_codes={c:GetOriginalCode()}
+	end
 end
