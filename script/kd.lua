@@ -116,6 +116,20 @@ Card.GetCode=function(c)
 	end
 	return card_get_code(c)
 end
+Card.IsSetCardExtra=function(c,codes)
+	local ct={codes}
+	local sets={}
+	if #ct==1 then
+		table.insert(sets,Duel.GetCardSetcodeFromCode(ct[1]))
+	end
+	if #ct>1 then
+		for _,code in pairs(ct) do
+			table.insert(sets,Duel.GetCardSetcodeFromCode(code))
+		end
+	end
+	if #sets==0 then return false end
+	return c:IsSetCard(sets)
+end
 
 function Qued.bofilter(c)
 	return c:IsSetCard(SET_BLOOD_OMEN) and metaFlag(c)
