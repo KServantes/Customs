@@ -49,6 +49,9 @@ local function getLvBetween(c)
 	end
 	return min, max
 end
+local function printHex(decn)
+	return string.format('%x',decn)
+end
 --card with self flag
 local function metaFlag(c)
 	return c.flag==1
@@ -412,19 +415,11 @@ function Qued.AddAttributes(c,spell)
 	local me1=Effect.CreateEffect(c)
 	me1:SetType(EFFECT_TYPE_SINGLE)
 	me1:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
-	me1:SetCode(EFFECT_ADD_TYPE)
-	me1:SetRange(LOCATION_GRAVE)
-	me1:SetCondition(function (e) return card.flag==1 end)
+	me1:SetCode(EFFECT_CHANGE_TYPE)
+	me1:SetRange(LOCATION_GRAVE|LOCATION_SZONE)
+	me1:SetCondition(function (e) return e:GetHandler().flag==1 end)
 	me1:SetValue(atts.ctpe)
 	c:RegisterEffect(me1)
-	local me2=me1:Clone()
-	me2:SetCode(EFFECT_REMOVE_TYPE)
-	if spell then
-		me2:SetValue(TYPE_BLOOD_SPELL)
-	else
-		me2:SetValue(TYPE_BLOOD_TRAP)
-	end
-	c:RegisterEffect(me2)
 	local me3=me1:Clone()
 	me3:SetCode(EFFECT_SET_ATTACK_FINAL)
 	me3:SetValue(atts.catk)
@@ -447,23 +442,31 @@ function Qued.AddAttributes(c,spell)
 	c:RegisterEffect(me7)
 	--reset flag
 	local me8=Effect.CreateEffect(c)
-	me8:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_CONTINUOUS)
-	me8:SetCode(EVENT_LEAVE_FIELD)
-	me8:SetRange(LOCATION_GRAVE)
-	me8:SetOperation(Qued.resetflag)
-	c:RegisterEffect(me8)
+	me8:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+	me8:SetCode(EVENT_LEAVE_FIELD_P)
+	me8:SetOperation(Qued.resetflag1)
+	Duel.RegisterEffect(me8,0)
 	local me9=me8:Clone()
 	me9:SetCode(EVENT_LEAVE_GRAVE)
-	c:RegisterEffect(me9)
+	me9:SetOperation(Qued.resetflag2)
+	Duel.RegisterEffect(me9,0)
 end
-function Qued.resetflag(e,tp,eg,ep,ev,re,r,rp)
+function Qued.resetflag1(e,tp,eg,ep,ev,re,r,rp)
 	local c=e:GetHandler()
+	if #eg>1 or eg:GetFirst()~=c then return end
 	local card=c:GetMetatable(c)
-	if c:GetPreviousLocation()==LOCATION_GRAVE and not c:GetDestination()==LOCATION_MZONE then
-		card.flag=0
+	if c:GetLocation()&LOCATION_MZONE~=0 and c:GetDestination()&LOCATION_GRAVE==0 then
+		card.flag=nil
+		e:Reset()
 	end
-	if c:GetPreviousLocation()==LOCATION_MZONE and not c:GetDestination()==LOCATION_GRAVE then
-		card.flag=0
+end
+function Qued.resetflag2(e,tp,eg,ep,ev,re,r,rp)
+	local c=e:GetHandler()
+	if #eg>1 or eg:GetFirst()~=c then return end
+	local card=c:GetMetatable(c)
+	if c:GetPreviousLocation()&LOCATION_GRAVE~=0 and c:GetLocation()&LOCATION_MZONE==0 then
+		card.flag=nil
+		e:Reset()
 	end
 end
 
