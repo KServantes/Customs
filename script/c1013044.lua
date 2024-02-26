@@ -30,7 +30,7 @@ function c1013044.initial_effect(c)
 	e3:SetRange(LOCATION_PZONE)
 		--for copy effect
 	e3:SetLabel(1013058)
-	e3:SetCountLimit(1,1013044)
+	e3:SetCountLimit(1,{id,1})
 	e3:SetTarget(c1013044.thtg)
 	e3:SetOperation(c1013044.thop)
 	c:RegisterEffect(e3)
