@@ -138,6 +138,32 @@ function Qued.bofilter(c)
 	return c:IsSetCard(SET_BLOOD_OMEN) and metaFlag(c)
 end
 
+--fun table
+Qued.funTable=function(...)
+    local t={...}
+    t.count=function()
+        local ct=0
+        for _,v in pairs(t) do
+            if type(v)~='function' then
+                ct=ct+1
+            end
+        end
+        return ct
+    end
+    t.clear=function()
+        for k,v in pairs(t) do
+            if type(v)~='function' then
+                t[k]=nil
+            end
+        end
+    end
+    t.merge=function(self,ot)
+        for k,v in pairs(ot) do
+            self[k]=v
+        end
+    end
+    return t
+end
 
 --[[ Reborn Pepe Functions ]]---
 
@@ -667,16 +693,27 @@ function Qued.LinkOp(sp_ct)
 end
 
 --Some Helper Functions for Blood Omen Lyria
-function Qued.CheckChain(ct,tp)
-	local i,flag=0,false
-	while flag==false and i~=ct do
-		local ce,cp=Duel.GetChainInfo(i,CHAININFO_TRIGGERING_EFFECT,CHAININFO_TRIGGERING_PLAYER)
-		local rc=ce:GetHandler()
-		if rc and rc:IsType(TYPE_MONSTER) and Duel.IsChainNegatable(i) 
-			and (not rc:IsSetCard(SET_BLOOD_OMEN) or cp~=tp) then flag=true end
-		i=i+1
-	end
-	return flag
+function Qued.CheckChain(c,tp,ev)
+    local st=c:GetMetatable().st
+    for i=1,ev do
+        local ce,cp=Duel.GetChainInfo(i,CHAININFO_TRIGGERING_EFFECT,CHAININFO_TRIGGERING_PLAYER)
+        local rc=ce:GetHandler()
+        if rc and Duel.IsChainNegatable(i) then
+            --our cards
+            if cp==tp and rc:IsSetCard(SET_BLOOD_OMEN) then
+                if not st.sc[rc] then st.sc[rc]=true end
+            end
+            --opponent's cards
+            if cp~=tp and rc:IsType(TYPE_MONSTER) then  
+                if not st.oc[rc] then st.oc[rc]=true end
+            end
+        end
+    end
+    local res=st.sc.count()>=1 and st.oc.count()>0
+    st.sc.clear()
+    st.oc.clear()
+
+    return res
 end
 --returns chain table 'ch_t' with the chain link number before the chain's effect object
 --returns chain group the cards from the chain
@@ -691,7 +728,7 @@ function Qued.GetChainTableAndGroup(ct,tp)
 		local rc=ce:GetHandler()
 		if rc and Qued.chainfilter(rc,cp,tp) then
 			if not ch_t[rc] then
-				ch_t[rc]={i,ce}
+				ch_t[rc]=Qued.funTable(i,ce)
 			elseif ch_t[rc] then
 				table.insert(ch_t[rc],i)
 				table.insert(ch_t[rc],ce)
@@ -704,13 +741,10 @@ function Qued.GetChainTableAndGroup(ct,tp)
 end
 strings_table={4000,4001,4002,4003,4004}
 --returns the chain link no. selected...hopefully with message
-function Qued.GetChainToNegateFromTable(ch_t,nc,tp)
+function Qued.GetChainToNegateFromTable(ch_t,tp)
 	local op=nil
-	local ChainTable=ch_t[nc]
-	if not ch_t or not ChainTable then
-		return op
-	end
-	if #ChainTable>2 then
+	local ChainTable=ch_t
+	if ChainTable.count()>2 then
 		local str={}
 		local i=2
 		while i>1 do
@@ -770,7 +804,7 @@ function Qued.CodeRegOp(card)
 				if tc.extra_codes then
 					--reset passed down codes
 					local tmt=tc:GetMetatable()
-					tmt.extra_codes={tc:GetOriginalCode()}
+					tmt.extra_codes={[tc:GetOriginalCode()]=true}
 				end
 			else
 				--register single code
@@ -787,6 +821,6 @@ function Qued.CodeResetOp(card)
 		if r&(REASON_SYNCHRO+REASON_MATERIAL)~=0 
 			and (rc:GetType()&TYPE_SYNCHRO)~=0 then return end
 		--on leaving field for other reason reset
-		card.extra_codes={c:GetOriginalCode()}
+		card.extra_codes={[c:GetOriginalCode()]=true}
 	end
 end
