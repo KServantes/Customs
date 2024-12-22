@@ -541,6 +541,57 @@ function Qued.BloodOperation(id,card)
 	end
 end
 
+--Cannot be used for Summon, except xyz
+function Qued.UseOnlyAsXyzMat(c,lv,filter)
+	local e1=Effect.CreateEffect(c)
+	e1:SetType(EFFECT_TYPE_SINGLE)
+	e1:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
+	e1:SetRange(LOCATION_MZONE)
+	e1:SetCode(EFFECT_UNRELEASABLE_SUM)
+	e1:SetReset(RESET_EVENT+RESETS_STANDARD)
+	e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
+	e1:SetValue(1)
+	c:RegisterEffect(e1)
+	local e2=e1:Clone()
+	e2:SetCode(EFFECT_UNRELEASABLE_NONSUM)
+	c:RegisterEffect(e2)
+	local e3=Effect.CreateEffect(c)
+	e3:SetType(EFFECT_TYPE_SINGLE)
+	e3:SetProperty(EFFECT_FLAG_UNCOPYABLE+EFFECT_FLAG_CANNOT_DISABLE)
+	e3:SetCode(EFFECT_CANNOT_BE_XYZ_MATERIAL)
+	e3:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
+	e3:SetReset(RESET_EVENT+RESETS_STANDARD)
+	e3:SetValue(function (e,c)
+		if not c then return false end
+		return not filter
+	end)
+	c:RegisterEffect(e3)
+	local e4=e3:Clone()
+	e4:SetCode(EFFECT_CANNOT_BE_SYNCHRO_MATERIAL)
+	c:RegisterEffect(e4)
+	local e5=e3:Clone()
+	e5:SetCode(EFFECT_CANNOT_BE_FUSION_MATERIAL)
+	c:RegisterEffect(e5)
+	local e6=Effect.CreateEffect(c)
+	e6:SetType(EFFECT_TYPE_SINGLE)
+	e6:SetCode(EFFECT_XYZ_LEVEL)
+	e6:SetProperty(EFFECT_FLAG_SET_AVAILABLE+EFFECT_FLAG_IGNORE_IMMUNE)
+	e6:SetRange(LOCATION_MZONE)
+	e6:SetValue(lv)
+	c:RegisterEffect(e6)
+end
+
+--Shuffle after detach
+function Qued.ShuffleAfterDetach(c)
+    local e1=Effect.CreateEffect(c)
+    e1:SetType(EFFECT_TYPE_FIELD)
+    e1:SetCode(EFFECT_TO_GRAVE_REDIRECT)
+    e1:SetTargetRange(LOCATION_OVERLAY,LOCATION_OVERLAY)
+    e1:SetTarget(function (_,tc) return tc==c end)
+    e1:SetValue(LOCATION_DECK)
+    Duel.RegisterEffect(e1,0)
+end
+
 --custom pendulum from gy proc
 function Qued.AddPendyProcedure(c,reg,desc)
 	local e1=Effect.CreateEffect(c)
