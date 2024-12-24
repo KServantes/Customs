@@ -24,6 +24,7 @@ RESETS_BLOOD_OMEN = RESET_TODECK|RESET_TOHAND|RESET_REMOVE
 HINTMSG_CHAINNO=4005
 
 SET_BLOOD_OMEN = 0xd3d
+SET_BLOOD = 0xd3e
 
 TYPE_BLOOD_SPELL=TYPE_QUICKPLAY|TYPE_SPELL
 TYPE_BLOOD_TRAP=TYPE_COUNTER|TYPE_TRAP
@@ -572,13 +573,16 @@ function Qued.UseOnlyAsXyzMat(c,lv,filter)
 	local e5=e3:Clone()
 	e5:SetCode(EFFECT_CANNOT_BE_FUSION_MATERIAL)
 	c:RegisterEffect(e5)
-	local e6=Effect.CreateEffect(c)
-	e6:SetType(EFFECT_TYPE_SINGLE)
-	e6:SetCode(EFFECT_XYZ_LEVEL)
-	e6:SetProperty(EFFECT_FLAG_SET_AVAILABLE+EFFECT_FLAG_IGNORE_IMMUNE)
-	e6:SetRange(LOCATION_MZONE)
-	e6:SetValue(lv)
+	local e6=e3:Clone()
+	e6:SetCode(EFFECT_CANNOT_BE_LINK_MATERIAL)
 	c:RegisterEffect(e6)
+	local e7=Effect.CreateEffect(c)
+	e7:SetType(EFFECT_TYPE_SINGLE)
+	e7:SetCode(EFFECT_XYZ_LEVEL)
+	e7:SetProperty(EFFECT_FLAG_SET_AVAILABLE+EFFECT_FLAG_IGNORE_IMMUNE)
+	e7:SetRange(LOCATION_MZONE)
+	e7:SetValue(lv)
+	c:RegisterEffect(e7)
 end
 
 --Shuffle after detach
