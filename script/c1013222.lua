@@ -85,6 +85,7 @@ function cod.sop(e,tp,eg,ep,ev,re,r,rp)
 	if #g>0 and Duel.SendtoHand(g,nil,REASON_EFFECT,tp)>0 then
 		local e1=Effect.CreateEffect(e:GetHandler())
 		e1:SetType(EFFECT_TYPE_FIELD|EFFECT_TYPE_CONTINUOUS)
+		e1:SetProperty(EFFECT_FLAG_DELAY)
 		e1:SetCode(EVENT_TO_HAND)
 		e1:SetOperation(cod.damop)
 		e1:SetReset(RESET_PHASE|PHASE_END)
@@ -93,5 +94,5 @@ function cod.sop(e,tp,eg,ep,ev,re,r,rp)
 end
 
 function cod.damop(e,tp,eg,ep,ev,re,r,rp)
-	Duel.Damage(#eg*300,1-tp,REASON_EFFECT)
+	Duel.Damage(1-tp,#eg*300,REASON_EFFECT)
 end

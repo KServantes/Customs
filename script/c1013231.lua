@@ -33,15 +33,23 @@ end
 
 --special summon check func
 function cod.spcheckop(e,tp,eg,ep,ev,re,r,rp)
+	if Duel.GetTurnCount()~=cod[2] then
+		cod[0]=0
+		cod[1]=0
+		cod[2]=Duel.GetTurnCount()
+	end
 	local tc=eg:GetFirst()
 	for tc in aux.Next(eg) do
-		Duel.RegisterFlagEffect(tc:GetSummonPlayer(),id,RESET_PHASE+PHASE_END,0,1)
+		local sp=tc:GetSummonPlayer()
+		cod[sp]=cod[sp]+1
 	end
+	if cod[1-tp]<2 then return end
+	Duel.RegisterFlagEffect(tc:GetSummonPlayer(),id,RESET_PHASE+PHASE_END,0,1)
 end
 
 --negate summon
 function cod.con(e,tp,eg,ep,ev,re,r,rp)
-	return Duel.GetCurrentChain(true)==0 and Duel.GetFlagEffect(1-tp,id)>=3
+	return Duel.GetCurrentChain(true)==0 and Duel.GetFlagEffect(1-tp,id)>0
 end
 function cod.cost(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.CheckLPCost(tp,1000) end
@@ -50,8 +58,9 @@ end
 function cod.tg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return true end
 	local g=Duel.GetMatchingGroup(Card.IsFaceup,tp,0,LOCATION_ONFIELD,nil)
+	local sg=eg+g
 	Duel.SetOperationInfo(0,CATEGORY_DISABLE_SUMMON,eg,#eg,0,0)
-	Duel.SetOperationInfo(0,CATEGORY_TODECK,eg+g,#eg+g,0,0)
+	Duel.SetOperationInfo(0,CATEGORY_TODECK,sg,#sg,1-tp,LOCATION_ONFIELD)
 end
 function cod.nfilter(c,...)
 	return c:IsCode(...) or c:ListsCode(...) or c:IsSetCardExtra(...)
@@ -63,18 +72,17 @@ end
 function cod.op(e,tp,eg,ep,ev,re,r,rp)
 	Duel.NegateSummon(eg)
 	local g=Duel.GetMatchingGroup(Card.IsFaceup,tp,0,LOCATION_ONFIELD,nil)
-	local bg=Duel.IsExistingMatchingCard(cod.bfilter,tp,LOCATION_MZONE,0,1,nil)
-	Duel.SendtoDeck(eg+g,tp,SEQ_DECKSHUFFLE,REASON_EFFECT)
-	if #g>1 then
-		local e1=Effect.CreateEffect(e:GetHandler())
-		e1:SetType(EFFECT_TYPE_FIELD)
-		e1:SetCode(EFFECT_CANNOT_SPECIAL_SUMMON)
-		e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET+EFFECT_FLAG_CLIENT_HINT)
-		e1:SetDescription(aux.Stringid(id,0))
-		e1:SetTargetRange(0,1)
-		e1:SetReset(RESET_PHASE+PHASE_END)
-		Duel.RegisterEffect(e1,tp)
-	end
+	local bg=Duel.IsExistingMatchingCard(cod.bfilter,tp,LOCATION_MZONE,0,1,nil,eg)
+	Duel.SendtoDeck(eg+g,nil,SEQ_DECKSHUFFLE,REASON_EFFECT)
+	if #bg<=0 then return end
+	local e1=Effect.CreateEffect(e:GetHandler())
+	e1:SetType(EFFECT_TYPE_FIELD)
+	e1:SetCode(EFFECT_CANNOT_SPECIAL_SUMMON)
+	e1:SetProperty(EFFECT_FLAG_PLAYER_TARGET+EFFECT_FLAG_CLIENT_HINT)
+	e1:SetDescription(aux.Stringid(id,0))
+	e1:SetTargetRange(0,1)
+	e1:SetReset(RESET_PHASE+PHASE_END)
+	Duel.RegisterEffect(e1,tp)
 end
 
 --Set
