@@ -74,7 +74,7 @@ function cod.op(e,tp,eg,ep,ev,re,r,rp)
 	local g=Duel.GetMatchingGroup(Card.IsFaceup,tp,0,LOCATION_ONFIELD,nil)
 	local bg=Duel.IsExistingMatchingCard(cod.bfilter,tp,LOCATION_MZONE,0,1,nil,eg)
 	Duel.SendtoDeck(eg+g,nil,SEQ_DECKSHUFFLE,REASON_EFFECT)
-	if #bg<=0 then return end
+	if not bg then return end
 	local e1=Effect.CreateEffect(e:GetHandler())
 	e1:SetType(EFFECT_TYPE_FIELD)
 	e1:SetCode(EFFECT_CANNOT_SPECIAL_SUMMON)
