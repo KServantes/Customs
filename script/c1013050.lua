@@ -15,7 +15,8 @@ function c1013050.initial_effect(c)
 	e1:SetCode(EFFECT_UPDATE_ATTACK)
 	e1:SetRange(LOCATION_PZONE+LOCATION_SZONE)
 	e1:SetTargetRange(0,LOCATION_MZONE)
-	e1:SetValue(-2200)
+	e1:SetTarget(function (e,c) return not c:IsNonEffectMonster() end)
+	e1:SetValue(function (e,c) return -(c:GetAttack()/2) end)
 		--for copy effect
 	e1:SetLabel(CARD_AZEGAHL)
 	c:RegisterEffect(e1)
@@ -45,9 +46,9 @@ function c1013050.initial_effect(c)
 	c:RegisterEffect(e3)
 end
 
-function cod.limit(e,te,tp)
-	return te:IsActiveType(TYPE_MONSTER+TYPE_EFFECT)
-		and te:GetHandler():IsStatus(STATUS_SUMMON_TURN+STATUS_FLIP_SUMMON_TURN+STATUS_SPSUMMON_TURN)
+function cod.limit(e,se,sp)
+	local sc=se:GetHandler()
+	return se:IsMonsterEffect() and se:GetCode()==EVENT_SPSUMMON_SUCCESS and se:IsHasType(EFFECT_TYPE_SINGLE)
 end
 
 function cod.mvcost(e,tp,eg,ep,ev,re,r,rp,chk)

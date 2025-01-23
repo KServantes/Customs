@@ -10,6 +10,7 @@ function cod.initial_effect(c)
 		extratg=cod.extratg
 	}
 	e1:SetHintTiming(0,TIMINGS_CHECK_MONSTER_E)
+	e1:SetCountLimit(1,id)
 	e1:SetCost(cod.cost)
 	c:RegisterEffect(e1)
 	--Place

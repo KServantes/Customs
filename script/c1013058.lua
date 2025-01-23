@@ -16,13 +16,24 @@ function cod.initial_effect(c)
 	e1:SetTarget(cod.sptg)
 	e1:SetOperation(cod.spop)
 	c:RegisterEffect(e1)
-	--Apply Effects
+	--Indes
 	local e2=Effect.CreateEffect(c)
-	e2:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
-	e2:SetCode(EVENT_ADJUST)
+	e2:SetType(EFFECT_TYPE_FIELD)
+	e2:SetCode(EFFECT_INDESTRUCTABLE_EFFECT)
 	e2:SetRange(LOCATION_MZONE)
-	e2:SetOperation(Qued.Azegahl)
+	e2:SetTargetRange(LOCATION_MZONE,LOCATION_MZONE)
+	e2:SetTarget(function (e,c)
+		return e:GetHandler():GetLinkedGroup():IsContains(c)
+	end)
+	e2:SetValue(1)
 	c:RegisterEffect(e2)
+	--Apply Effects
+	local e3=Effect.CreateEffect(c)
+	e3:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+	e3:SetCode(EVENT_ADJUST)
+	e3:SetRange(LOCATION_MZONE)
+	e3:SetOperation(Qued.Azegahl)
+	c:RegisterEffect(e3)
 end
 
 --materials
