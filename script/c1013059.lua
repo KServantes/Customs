@@ -113,7 +113,8 @@ end
 --[ monster effects ]
 --immune
 function cod.imcon(e,tp,eg,ep,ev,re,r,rp)
-	return aux.fuslimit and e:GetHandler():IsStatus(STATUS_SPSUMMON_TURN)
+	local c=e:GetHandler()
+	return c:IsFusionSummoned() and c:IsStatus(STATUS_SPSUMMON_TURN)
 end
 function cod.efilter(e,te)
 	if te:GetHandler():GetCode()==id then return false end
